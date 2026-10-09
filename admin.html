@@ -930,7 +930,16 @@ const LIMITS = [['POST', /^\/orders$/, 10], ['POST', /\/call$/, 6], ['POST', /^\
 const OFFLINE_MSG = 'الكاشير مش متصل هلق 😕 تأكد إن لوحة التحكم مفتوحة على جهاز الكاشير، وجرب كمان مرة.';
 
 const joinCode = cleanCode(new URLSearchParams(location.search).get('c'));
-const client = joinCode ? createClient({ code: joinCode, onEvent: deliver }) : null;
+// رابط الكود مفتوح بنفس متصفح اللوحة (مثلاً الكاشير بيجرّب على جواله): بيحكوا مع بعض مباشرة،
+// لأن الجوال بيوقّف تبويب اللوحة لما يكون بالخلفية فما بيقدر يرد عبر الإنترنت
+const sameBrowser = Boolean(joinCode) && cleanCode(read(CODE_KEY)) === joinCode;
+const linkListeners = new Set();
+let linkState = joinCode && !sameBrowser ? 'connecting' : 'local';
+const client = joinCode && !sameBrowser ? createClient({
+  code: joinCode,
+  onEvent: deliver,
+  onStatus: (st) => { linkState = st; linkListeners.forEach((fn) => { try { fn(st); } catch { /* */ } }); },
+}) : null;
 let host = null;
 let menuTimer = null;
 let relayState = 'off';
@@ -994,6 +1003,16 @@ async function serve(msg) {
   return { id: msg.id, status: r.status, data: r.data };
 }
 
+// شاشة جوال الكاشير بتضل شغّالة طول ما اللوحة قدّامه (إذا طفت الشاشة بيوقف الاستقبال)
+let wakeLock = null;
+async function keepAwake() {
+  if (!host || document.hidden || wakeLock) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch { /* المتصفح ما بيدعمها أو رفض */ }
+}
+
 function startHosting() {
   setRelayState('connecting');
   host = createHost({
@@ -1002,7 +1021,17 @@ function startHosting() {
     snapshot: async () => (await handle('GET', '/menu', null, { hooks })).data,
     onState: (n) => setRelayState(n ? 'online' : 'connecting'),
   });
+  keepAwake();
 }
+
+// لما ترجع الصفحة قدّام المستخدم: نقرأ آخر بيانات ونعيد الاتصال فوراً
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  reloadFromStorage();
+  host?.wake();
+  client?.wake();
+  keepAwake();
+});
 
 window.io = (opts = {}) => new DemoSocket(opts.auth);
 window.__CAFE_DEMO__ = {
@@ -1013,6 +1042,12 @@ window.__CAFE_DEMO__ = {
     const r = await local(method, path, body, token);
     if (r.status >= 400) throw fail(r);
     return clone(r.data); // نسخة مستقلة مثل ما بترجع من الشبكة
+  },
+
+  /** حالة اتصال صفحة الزبون بالكاشير: local (نفس الجهاز) | connecting | online | offline */
+  link: {
+    get state() { return linkState; },
+    onChange(fn) { linkListeners.add(fn); fn(linkState); },
   },
 
   /** لوحة الكاشير بتصير "السيرفر" للأجهزة الثانية */
@@ -3252,6 +3287,15 @@ class MqttLink {
     };
   }
 
+  /** لما ترجع الصفحة قدّام المستخدم: إذا الاتصال واقع بنعيده هلق بدل ما نستنى دور المحاولة */
+  kick() {
+    if (this.closed || this.connected) return;
+    if (this.ws && this.ws.readyState < 2) return; // لسا عم يتصل
+    clearTimeout(this.timer);
+    this.retry = 1000;
+    this.open();
+  }
+
   later() {
     if (this.closed) return;
     clearTimeout(this.timer);
@@ -3364,6 +3408,12 @@ function createHost({ code, serve, snapshot, onState = () => {} }) {
   return {
     code,
     get online() { return links.some((l) => l.connected); },
+    wake() {
+      links.forEach((l) => {
+        if (l.connected) l.publish(base + '/admin', { online: true, at: Date.now() }, { retain: true });
+        else l.kick();
+      });
+    },
     /** حدث مباشر للزباين: للكل أو لصاحب طلب معيّن (أحداث الكاشير ما بتطلع برّا) */
     event(ev) {
       const room = ev.room ?? null;
@@ -3378,69 +3428,101 @@ function createHost({ code, serve, snapshot, onState = () => {} }) {
 }
 
 /**
- * جهة الزبون: بيتصل بأول وسيط بيرد، وبيبعت الطلبات للكاشير وبيستنى الرد.
+ * جهة الزبون: بيتصل بكل الوسطاء مع بعض وبيكمّل مع أول واحد بيرد، وبيبعت الطلبات للكاشير وبيستنى الرد.
  * request() بيرمي { offline: true } إذا الإنترنت أو الكاشير مش متصلين، عشان النسخة تقرر شو تعمل.
+ * onStatus: 'connecting' | 'online' (الكاشير فاتح اللوحة) | 'offline' (اللوحة مسكّرة)
  */
-function createClient({ code, onEvent = () => {} }) {
+function createClient({ code, onEvent = () => {}, onStatus = () => {} }) {
   const base = ROOT + code;
   const me = randomId(12);
   const pending = new Map();
   const tracked = new Set();
-  let link = null;
+  let links = [];
+  let link = null; // الوسيط اللي ربح
   let swap = null;
   let admin = null; // آخر حالة معروفة للكاشير { online, at }
   let menu = null;
+  let isReady = false;
   let markReady;
-  const ready = new Promise((r) => { markReady = r; });
+  const ready = new Promise((r) => { markReady = () => { isReady = true; r(); report(); }; });
+
+  const status = () => (!link?.connected ? 'connecting' : admin?.online === true ? 'online' : isReady ? 'offline' : 'connecting');
+  let last = null;
+  function report() {
+    const st = status();
+    if (st !== last) { last = st; onStatus(st); }
+  }
 
   function onMessage(topic, msg) {
-    if (topic === base + '/admin') admin = msg;
+    if (topic === base + '/admin') { admin = msg; report(); }
     else if (topic === base + '/menu') menu = msg;
     else if (topic === `${base}/res/${me}`) pending.get(msg?.id)?.(msg);
     else if (topic.startsWith(base + '/ev/')) onEvent(msg);
     if (admin && menu) markReady();
   }
 
-  function use(i) {
-    link?.close();
-    link = new MqttLink(BROKERS[i % BROKERS.length], {
-      clientId: 'cmc' + me,
-      onMessage,
-      onState: (up) => {
-        clearTimeout(swap);
-        // الرسائل المحفوظة (حالة الكاشير والمنيو) بتوصل مباشرة بعد الاشتراك
-        if (up) setTimeout(markReady, 1500);
-        else swap = setTimeout(() => { if (!link.connected) use(i + 1); }, 8000);
-      },
-    });
-    [base + '/admin', base + '/menu', `${base}/res/${me}`, base + '/ev/all', ...[...tracked].map((id) => `${base}/ev/o/${id}`)]
-      .forEach((t) => link.subscribe(t));
+  const topics = () => [base + '/admin', base + '/menu', `${base}/res/${me}`, base + '/ev/all', ...[...tracked].map((id) => `${base}/ev/o/${id}`)];
+
+  function race() {
+    links.forEach((l) => l.close());
+    link = null;
     clearTimeout(swap);
-    swap = setTimeout(() => { if (!link.connected) use(i + 1); }, 6000);
+    links = BROKERS.map((url) => {
+      const l = new MqttLink(url, {
+        clientId: 'cmc' + me,
+        onMessage: (t, m) => { if (l === link) onMessage(t, m); },
+        onState: (up) => {
+          if (up && !link) {
+            link = l;
+            links.filter((x) => x !== l).forEach((x) => x.close());
+            // الرسائل المحفوظة (حالة الكاشير والمنيو) بتوصل مباشرة بعد الاشتراك
+            setTimeout(markReady, 1500);
+          } else if (l === link && !up) {
+            clearTimeout(swap);
+            swap = setTimeout(() => { if (!l.connected) race(); }, 8000);
+          }
+          report();
+        },
+      });
+      topics().forEach((t) => l.subscribe(t));
+      return l;
+    });
+    report();
   }
-  use(0);
+  race();
 
   const offline = (why) => Object.assign(new Error(why), { offline: true });
   return {
     get menu() { return menu; },
     get adminOnline() { return admin?.online === true; },
+    get status() { return status(); },
     async whenReady(ms = 7000) {
       await Promise.race([ready, new Promise((r) => setTimeout(r, ms))]);
+    },
+    wake() {
+      if (!link) links.forEach((l) => l.kick());
+      else if (!link.connected) link.kick();
     },
     track(ids) {
       for (const id of [].concat(ids)) {
         if (typeof id !== 'string' || tracked.has(id)) continue;
         tracked.add(id);
-        link.subscribe(`${base}/ev/o/${id}`);
+        (link ? [link] : links).forEach((l) => l.subscribe(`${base}/ev/o/${id}`));
       }
     },
     async request(method, path, body, timeout = 12_000) {
       await this.whenReady();
-      if (!link.connected) throw offline('network');
+      if (!link?.connected) throw offline('network');
       if (!this.adminOnline) throw offline('admin');
       const id = randomId(10);
       return new Promise((resolve, reject) => {
-        const t = setTimeout(() => { pending.delete(id); reject(offline('timeout')); }, timeout);
+        const t = setTimeout(() => {
+          pending.delete(id);
+          // الكاشير ما رد (غالباً اللوحة بالخلفية أو الشاشة طافية): بنعتبره مش متصل لحد ما يرجع يبعت حالته
+          admin = { online: false };
+          report();
+          reject(offline('timeout'));
+        }, timeout);
         pending.set(id, (msg) => { clearTimeout(t); pending.delete(id); resolve(msg); });
         if (!link.publish(base + '/req', { id, from: me, method, path, body: body ?? null })) {
           clearTimeout(t);
@@ -4136,7 +4218,7 @@ function renderTablesView() {
     $('#qrBase').value = customerLink();
     $('#qrBase').readOnly = true;
     $('#qrBaseLabel').textContent = 'رابط الزبائن';
-    $('#siteQrHint').textContent = 'امسحه من أي جوال أو ابعت الرابط: الطلب بيوصل لهاللوحة بنفس اللحظة طول ما هي مفتوحة. الزبون أول اشي بيكتب رقم طاولته.';
+    $('#siteQrHint').textContent = 'امسحه من أي جوال أو ابعت الرابط: الطلب بيوصل لهاللوحة بنفس اللحظة. خلّي اللوحة مفتوحة وقدّامك، لأن الجوال بيوقّفها إذا رحت لتطبيق ثاني.';
     $('#copyLink').hidden = false;
     // مشاركة الرابط هي الأهم بهالنسخة، والطباعة ثانوية
     $('#copyLink').className = 'btn btn-brass btn-sm';
@@ -4587,7 +4669,12 @@ function bind() {
     }
     if (e.key === 'Escape' && S.selected != null && !document.querySelector('.sheet.is-open')) closeDrawer();
   });
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { S.unseen = 0; document.title = `لوحة الكاشير — ${S.data?.settings.cafeName ?? ''}`; } });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    S.unseen = 0;
+    document.title = `لوحة الكاشير — ${S.data?.settings.cafeName ?? ''}`;
+    resync();
+  });
   setInterval(() => {
     $('#clock').textContent = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   }, 1000);
@@ -4643,6 +4730,24 @@ function renderRelay(state) {
   live.dataset.link = '';
   live.title = hint;
   live.querySelector('span').textContent = label;
+}
+
+/** لما ترجع اللوحة قدّام الكاشير (الجوال بيوقّفها بالخلفية): نجيب اللي فاتنا من طلبات ونداءات */
+async function resync() {
+  if (!S.data) return;
+  try {
+    const fresh = await call('/bootstrap');
+    const missed = fresh.orders.filter((o) => o.status === 'new' && !S.orders.some((x) => x.id === o.id));
+    const newCalls = fresh.calls.filter((c) => !S.calls.some((x) => x.id === c.id));
+    S.orders = fresh.orders;
+    S.calls = fresh.calls;
+    refreshLive();
+    refreshBarStats();
+    if (missed.length || newCalls.length) {
+      if (S.sound) chime(missed.length ? 'order' : 'call');
+      toast(missed.length ? `وصلك ${missed.length === 1 ? 'طلب جديد' : `${missed.length} طلبات جديدة`} وإنت برّا اللوحة` : 'في نداء نادل وصل وإنت برّا اللوحة');
+    }
+  } catch { /* */ }
 }
 
 async function boot() {
