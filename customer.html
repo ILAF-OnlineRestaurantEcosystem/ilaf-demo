@@ -1131,6 +1131,8 @@ async function keepAwake() {
 
 function startHosting() {
   setRelayState('connecting');
+  // بنطلب من المتصفح ما يمسح بيانات المحل لحاله لما تقل مساحة الجهاز
+  navigator.storage?.persist?.().catch(() => {});
   host = createHost({
     code: relayCode(),
     serve,
@@ -1182,6 +1184,9 @@ window.__CAFE_DEMO__ = {
     },
   },
 
+  /** حجم البيانات المحفوظة بهالمتصفح (ك.ب) — المتصفح بيسمح بحوالي 5 ميغا */
+  storageKB() { const v = read(DB_KEY); return v ? Math.round(v.length / 1024) : 0; },
+
   gemini: {
     get configured() { return Boolean(process.env.GEMINI_API_KEY); },
     set(key) {
@@ -1199,8 +1204,8 @@ __def("server/core.js", function (__e) {
 'use strict';
 // قلب النظام: كل مسارات الـ API كدوال صافية (بدون Express ولا ملفات)
 // نفس الكود بيشغّل السيرفر الحقيقي، وبيشغّل نسخة الـ HTML المستقلة داخل المتصفح.
-const { db, save, uid } = __req("standalone/db-browser.js");
-const { publicMenu, createOrder, setOrderStatus, publicOrder, tableInsight, stats, setLinePrice, closeTable, tableBill, currentDay, closeDay, months, monthReport, OPEN_STATUSES, HttpError } = __req("server/logic.js");
+const { db, save, uid, replaceAll } = __req("standalone/db-browser.js");
+const { publicMenu, createOrder, setOrderStatus, publicOrder, tableInsight, stats, setLinePrice, closeTable, tableBill, currentDay, closeDay, months, monthReport, maintain, OPEN_STATUSES, HttpError } = __req("server/logic.js");
 const { currentWeather, geocode } = __req("server/weather.js");
 const { chat } = __req("server/barista/index.js");
 const { aiStatus } = __req("server/barista/ai.js");
@@ -1346,6 +1351,7 @@ route('POST', '/admin/login', ({ body }) => {
 });
 route('POST', '/admin/logout', ({ token }) => { sessions.delete(token); return { ok: true }; }, { admin: true });
 route('GET', '/admin/bootstrap', ({ hooks }) => {
+  maintain(); // مرة باليوم: أرشفة الشهور اللي خلصت وتنظيف الطلبات القديمة
   const d = db();
   return {
     settings: d.settings,
@@ -1536,6 +1542,18 @@ route('PUT', '/admin/tables/:n', ({ p, body }) => {
 
 route('GET', '/admin/stats', ({ q }) => stats(str(q.get('range'), 8) || 'today'), { admin: true });
 route('GET', '/admin/months', () => months(), { admin: true });
+
+// نسخة احتياطية: كل البيانات بملف، وبترجع مكانها لما بدك (جهاز جديد أو انمسح المتصفح)
+route('GET', '/admin/backup', () => ({ app: 'cafe-mohammad', version: 1, exportedAt: new Date().toISOString(), data: db() }), { admin: true });
+route('POST', '/admin/restore', ({ body }) => {
+  const data = body?.data;
+  const ok = data && typeof data === 'object' && !Array.isArray(data)
+    && ['items', 'categories', 'orders', 'tables', 'zones', 'offers'].every((k) => Array.isArray(data[k]))
+    && data.settings && typeof data.settings === 'object';
+  if (!ok) throw new HttpError(400, 'هاد الملف مش نسخة احتياطية من نظام الطلبات.');
+  replaceAll(JSON.parse(JSON.stringify(data)));
+  return { data: { ok: true, orders: data.orders.length }, events: [toAll('menu:changed'), toAdmin('day:closed', {})] };
+}, { admin: true });
 route('GET', '/admin/months/:key', ({ p }) => monthReport(p.key), { admin: true });
 route('GET', '/admin/table-insight/:n', ({ p }) => tableInsight(p.n), { admin: true });
 route('PUT', '/admin/settings', ({ body: b = {} }) => {
@@ -1631,7 +1649,13 @@ function db() {
 }
 function save() { flush(); }
 function flush() {
-  try { localStorage.setItem(DB_KEY, JSON.stringify(state)); } catch (err) { console.warn('ما قدرنا نحفظ البيانات بالمتصفح:', err); }
+  try {
+    localStorage.setItem(DB_KEY, JSON.stringify(state));
+  } catch (err) {
+    console.warn('ما قدرنا نحفظ البيانات بالمتصفح:', err);
+    // اللوحة بتنبّه الكاشير ينزّل نسخة احتياطية
+    try { dispatchEvent(new CustomEvent('cafe:storage-full')); } catch { /* */ }
+  }
 }
 function reset() {
   state = buildSeed();
@@ -1642,11 +1666,18 @@ function reset() {
 function reloadFromStorage() {
   try { const s = JSON.parse(localStorage.getItem(DB_KEY)); if (s?.items) state = s; } catch { /* */ }
 }
+/** استرجاع نسخة احتياطية: بتحل محل كل البيانات */
+function replaceAll(next) {
+  state = next;
+  migrate(state);
+  flush();
+  return state;
+}
 function uid(prefix = '') {
   return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
-Object.assign(__e, { DB_KEY, load, db, save, flush, reset, reloadFromStorage, uid });
+Object.assign(__e, { DB_KEY, load, db, save, flush, reset, reloadFromStorage, replaceAll, uid });
 });
 
 __def("server/seed.js", function (__e) {
@@ -2251,7 +2282,7 @@ function setOrderStatus(id, status) {
   if (order.status === status) return order;
   order.status = status;
   order.updatedAt = new Date().toISOString();
-  order.history.push({ status, at: order.updatedAt });
+  (order.history ??= []).push({ status, at: order.updatedAt });
   save();
   return order;
 }
@@ -2337,9 +2368,10 @@ function closeDay({ force = false } = {}) {
   const { openTables, ...final } = currentDay();
   const record = { id: uid('day'), closedAt: now, ...final };
   d.days.unshift(record);
-  d.days = d.days.slice(0, 400);
+  d.days = d.days.slice(0, 62); // تفاصيل الأيام الأقدم محفوظة جوّا أرشيف الشهر
   d.settings.dayOpenedAt = now;
   save();
+  maintain({ force: true });
   return { record, closedOrders };
 }
 
@@ -2447,19 +2479,12 @@ const dateKey = (date) => { const x = new Date(date); return `${monthKey(x)}-${p
 const monthOrders = (key) => db().orders.filter((o) => o.status !== 'cancelled' && monthKey(o.createdAt) === key);
 const prevMonthKey = (key) => { const [y, m] = key.split('-').map(Number); return monthKey(new Date(y, m - 2, 1)); };
 
-/** كل الشهور اللي فيها مبيعات، الأحدث أولاً، مع ملخص كل شهر */
-function months() {
-  const keys = new Set([monthKey(new Date())]);
-  for (const o of db().orders) if (o.status !== 'cancelled') keys.add(monthKey(o.createdAt));
-  return [...keys].sort().reverse().map((key) => {
-    const m = summarize(monthOrders(key), db());
-    return { key, orders: m.orders, revenue: m.revenue, cost: m.cost, profit: m.profit, discounts: m.discounts, itemsSold: m.itemsSold };
-  });
-}
+// الأرشيف الشهري: لما يخلص الشهر بنحفظ تقريره كامل بملخص صغير بيضل للأبد،
+// وطلبات الشهور الأقدم من الشهر الماضي بتنحذف (عشان ذاكرة المتصفح بنسخة الموقع ما تمتلي).
+// prunedBefore: الشهور قبله ما ضل إلها طلبات كاملة، فتقريرها من الأرشيف بس.
+const isArchived = (key) => { const d = db(); return Boolean(d.monthly?.[key]) && Boolean(d.prunedBefore) && key < d.prunedBefore; };
 
-/** تقرير شهر كامل: الأرقام، المقارنة بالشهر اللي قبله، كل يوم لحاله، والأصناف بأرباحها */
-function monthReport(key) {
-  if (!/^\d{4}-\d{2}$/.test(String(key))) throw new HttpError(400, 'الشهر لازم يكون بصيغة 2026-10.');
+function liveMonth(key) {
   const d = db();
   const orders = monthOrders(key);
   const groups = {};
@@ -2468,24 +2493,86 @@ function monthReport(key) {
     const m = summarize(list, d);
     return { date, orders: m.orders, revenue: m.revenue, cost: m.cost, profit: m.profit };
   });
-  // الشهر الحالي لسا ما خلص: بنقارنه بنفس الأيام من الشهر اللي قبله، مش بالشهر كامل
-  const now = new Date();
-  const partial = key === monthKey(now);
-  const prevOrders = monthOrders(prevMonthKey(key)).filter((o) => !partial || new Date(o.createdAt).getDate() <= now.getDate());
-  const prev = summarize(prevOrders, d);
   const [y, m] = key.split('-').map(Number);
-  const best = days.reduce((a, b) => (!a || b.revenue > a.revenue ? b : a), null);
   return {
     key,
     from: new Date(y, m - 1, 1).toISOString(),
     to: new Date(y, m, 0, 23, 59, 59).toISOString(),
     ...analyze(orders),
     days,
-    bestDay: best,
+    bestDay: days.reduce((a, b) => (!a || b.revenue > a.revenue ? b : a), null),
     activeDays: days.length,
+  };
+}
+
+/** ملخص شهر (من الطلبات أو من الأرشيف). upToDay: بس أول كم يوم منه (للمقارنة بشهر لسا ما خلص) */
+function monthSummary(key, upToDay = null) {
+  const d = db();
+  if (isArchived(key)) {
+    const days = d.monthly[key].days.filter((x) => !upToDay || Number(x.date.slice(8)) <= upToDay);
+    const sum = (f) => round(days.reduce((s, x) => s + x[f], 0));
+    return { orders: sum('orders'), revenue: sum('revenue'), cost: sum('cost'), profit: sum('profit') };
+  }
+  const orders = monthOrders(key).filter((o) => !upToDay || new Date(o.createdAt).getDate() <= upToDay);
+  return summarize(orders, d);
+}
+
+/** صيانة مرة باليوم (وبعد إغلاق المحل): أرشفة الشهور اللي خلصت، حذف طلباتها القديمة، وتخفيف الطلبات المسكّرة */
+function maintain({ force = false } = {}) {
+  const d = db();
+  const today = new Date().toDateString();
+  if (!force && d.maintainedAt === today) return;
+  d.monthly ??= {};
+  const nowKey = monthKey(new Date());
+  const keepFrom = prevMonthKey(nowKey); // الشهر الحالي واللي قبله بنضل محتفظين بطلباتهم كاملة
+  for (const key of new Set(d.orders.map((o) => monthKey(o.createdAt)))) {
+    if (key < nowKey && !isArchived(key)) {
+      const { prev, cafeName, generatedAt, ...rep } = liveMonth(key);
+      d.monthly[key] = { ...rep, archivedAt: new Date().toISOString() };
+    }
+  }
+  const before = d.orders.length;
+  d.orders = d.orders.filter((o) => monthKey(o.createdAt) >= keepFrom || OPEN_STATUSES.includes(o.status));
+  if (d.orders.length < before || Object.keys(d.monthly).some((k) => k < keepFrom)) {
+    if (!d.prunedBefore || d.prunedBefore < keepFrom) d.prunedBefore = keepFrom;
+  }
+  // الطلبات المسكّرة من أكثر من 3 أيام ما بنحتاج تسلسل حالاتها (بيوفّر حوالي ثلث المساحة)
+  const cutoff = Date.now() - 3 * 86400000;
+  for (const o of d.orders) {
+    if (o.history && !OPEN_STATUSES.includes(o.status) && new Date(o.createdAt).getTime() < cutoff) delete o.history;
+  }
+  d.days = d.days.slice(0, 62);
+  d.maintainedAt = today;
+  save();
+}
+
+/** كل الشهور اللي فيها مبيعات (من الطلبات أو الأرشيف)، الأحدث أولاً، مع ملخص كل شهر */
+function months() {
+  maintain();
+  const d = db();
+  const keys = new Set([monthKey(new Date()), ...Object.keys(d.monthly ?? {})]);
+  for (const o of d.orders) if (o.status !== 'cancelled') keys.add(monthKey(o.createdAt));
+  return [...keys].sort().reverse().map((key) => {
+    const m = isArchived(key) ? d.monthly[key] : summarize(monthOrders(key), d);
+    return { key, orders: m.orders, revenue: m.revenue, cost: m.cost, profit: m.profit, discounts: m.discounts ?? 0, itemsSold: m.itemsSold ?? 0, archived: isArchived(key) };
+  });
+}
+
+/** تقرير شهر كامل: الأرقام، المقارنة بالشهر اللي قبله، كل يوم لحاله، والأصناف بأرباحها */
+function monthReport(key) {
+  if (!/^\d{4}-\d{2}$/.test(String(key))) throw new HttpError(400, 'الشهر لازم يكون بصيغة 2026-10.');
+  const d = db();
+  const now = new Date();
+  // الشهر الحالي لسا ما خلص: بنقارنه بنفس الأيام من الشهر اللي قبله، مش بالشهر كامل
+  const partial = key === monthKey(now);
+  const base = isArchived(key) ? d.monthly[key] : liveMonth(key);
+  const prev = monthSummary(prevMonthKey(key), partial ? now.getDate() : null);
+  return {
+    ...base,
+    archived: isArchived(key),
     prev: { key: prevMonthKey(key), orders: prev.orders, revenue: prev.revenue, profit: prev.profit, partial },
     cafeName: d.settings.cafeName,
-    generatedAt: new Date().toISOString(),
+    generatedAt: now.toISOString(),
   };
 }
 
@@ -2493,7 +2580,7 @@ class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 
-Object.assign(__e, { STATUSES, OPEN_STATUSES, STATUS_LABELS, SUGAR_LABELS, effectivePrice, comboValue, publicSettings, zoneOf, publicMenu, priceLines, dayStart, createOrder, setOrderStatus, publicOrder, setLinePrice, closeTable, tableBill, currentDay, closeDay, topItems, tableInsight, stats, monthKey, months, monthReport, HttpError });
+Object.assign(__e, { STATUSES, OPEN_STATUSES, STATUS_LABELS, SUGAR_LABELS, effectivePrice, comboValue, publicSettings, zoneOf, publicMenu, priceLines, dayStart, createOrder, setOrderStatus, publicOrder, setLinePrice, closeTable, tableBill, currentDay, closeDay, topItems, tableInsight, stats, monthKey, maintain, months, monthReport, HttpError });
 });
 
 __def("server/weather.js", function (__e) {
@@ -5225,6 +5312,7 @@ const UI = {
   fog: '<path d="M4 10h16M6 14h12M8 18h8"/>',
   edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
   trash: '<path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/>',
+  upload: '<path d="M12 15V4"/><path d="M7.5 8.5 12 4l4.5 4.5"/><path d="M5 19.5h14"/>',
   download: '<path d="M12 4v11"/><path d="M7.5 10.5 12 15l4.5-4.5"/><path d="M5 19.5h14"/>',
   printer: '<path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="7" rx="2"/><path d="M7 14h10v6H7z"/>',
   grid: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
