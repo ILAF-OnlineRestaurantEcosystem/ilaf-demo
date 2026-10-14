@@ -4,6 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f4ece1">
+  <script>
+    // المظهر قبل ما تنرسم الصفحة: فاتح / غامق / تلقائي حسب الجهاز
+    try {
+      var t = localStorage.getItem('cm.theme') || 'auto';
+      var dark = t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    } catch (e) { /* */ }
+  </script>
   <title>لوحة الكاشير — كافي محمد</title>
   <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMCI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNmU0ZjFkIi8+PHN0b3Agb2Zmc2V0PSIuMyIgc3RvcC1jb2xvcj0iI2Q5YjQ2YyIvPjxzdG9wIG9mZnNldD0iLjUiIHN0b3AtY29sb3I9IiNmNmUzYjQiLz48c3RvcCBvZmZzZXQ9Ii43MiIgc3RvcC1jb2xvcj0iI2M3OWE0ZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlNDIxNyIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjE2IiBmaWxsPSIjMGIxZjI0Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOSA0KSBzY2FsZSguNCkiPjxwYXRoIGQ9Ik00MiAxMDJDMjYgOTQgMTUgNzYgNyA1MmMtMS0zIDIuNS00LjUgNC41LTJDMjEgNzAgMzIgODQgNDcgOTB6IiBmaWxsPSJ1cmwoI2cpIi8+PHBhdGggZD0iTTc2IDcyYzIyLTIgMjggMjYgMTAgNDQiIGZpbGw9Im5vbmUiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMzggMTI4QzI3IDExNCAyOCA5OCA0NCA4NmM1LTQgNi0xMiAyLTE5aDI4Yy00IDctMyAxNSAyIDE5IDE2IDEyIDE3IDI4IDYgNDJ6IiBmaWxsPSJ1cmwoI2cpIi8+PHBhdGggZD0iTTQ0IDY3YzItMTMgMTAtMTkgMTYtMjkgNiAxMCAxNCAxNiAxNiAyOXoiIGZpbGw9InVybCgjZykiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjM0IiByPSI0LjUiIGZpbGw9InVybCgjZykiLz48cGF0aCBkPSJNMzUgMTI4aDUwbC0zIDZIMzh6IiBmaWxsPSIjYTc3ZDM4Ii8+PC9nPjwvc3ZnPgo=" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -719,6 +727,116 @@ tr.is-current td { background: var(--gold-soft); }
 .cashier-card.standby { box-shadow: inset 0 0 0 1.5px var(--amber); }
 
 </style>
+  <style>
+/* ─────────────────────────────────────────────
+   الوضع الغامق: إسبريسو دافي بنفس روح البيج والبني
+   بيتفعّل بـ <html data-theme="dark"> (الاختيار: فاتح / غامق / تلقائي حسب الجهاز — common.js)
+   ───────────────────────────────────────────── */
+:root[data-theme="dark"] {
+  --abyss: #110c09;
+  --harbor: #1a130f;
+  --tide: #241b15;
+  --swell: #2e231b;
+  --tint: 236, 218, 194;              /* بالغامق الخطوط والطبقات الشفافة فاتحة */
+  --line: rgba(236, 218, 194, .1);
+  --line-strong: rgba(236, 218, 194, .18);
+  --inset: rgba(236, 218, 194, .05);
+  --foam: #f1e6d6;
+  --foam-2: #cbb9a2;
+  --foam-3: #978670;
+  --brass: #8c6442;
+  --brass-hi: #e8c595;                /* النصوص المميزة: نحاسي فاتح */
+  --brass-lo: #8a7259;
+  --olive-soft: #2d2219;
+  --gold: #cfa56b;
+  --gold-soft: #3a2b1d;
+  --seaglass: #74b48f;
+  --coral: #e08d6c;
+  --amber: #d9a552;
+  --on-brass: #fbf1e3;
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, .03) inset, 0 8px 20px -14px rgba(0, 0, 0, .7);
+  --shadow-deep: 0 24px 50px -20px rgba(0, 0, 0, .75), 0 6px 16px -8px rgba(0, 0, 0, .5);
+  color-scheme: dark;
+}
+
+/* ───── مشترك ───── */
+[data-theme="dark"] ::selection { background: rgba(232, 197, 149, .25); }
+[data-theme="dark"] .btn-brass { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), 0 12px 24px -14px rgba(0, 0, 0, .9); }
+[data-theme="dark"] .btn-brass:hover { background: #9c724d; }
+[data-theme="dark"] .btn-ghost { box-shadow: inset 0 0 0 1.5px rgba(232, 197, 149, .4); }
+[data-theme="dark"] .btn-ghost:hover { background: rgba(232, 197, 149, .07); }
+[data-theme="dark"] .input:focus, [data-theme="dark"] .textarea:focus, [data-theme="dark"] .select:focus { background: var(--swell); box-shadow: 0 0 0 4px rgba(232, 197, 149, .12); }
+[data-theme="dark"] .select option { background: var(--tide); color: var(--foam); }
+[data-theme="dark"] .scrim { background: rgba(0, 0, 0, .55); }
+[data-theme="dark"] .sheet { box-shadow: 0 -20px 60px -20px rgba(0, 0, 0, .8); }
+[data-theme="dark"] .segmented button[aria-pressed="true"] { box-shadow: 0 4px 12px -8px rgba(0, 0, 0, .8); }
+[data-theme="dark"] .art {
+  color: #ead6b8;
+  background:
+    radial-gradient(90% 80% at 30% 20%, hsl(var(--h) 30% 32% / .9), transparent 65%),
+    radial-gradient(80% 70% at 80% 100%, hsl(calc(var(--h) - 4) 30% 10% / .6), transparent 70%),
+    linear-gradient(150deg, hsl(var(--h) 24% 23%), hsl(calc(var(--h) - 2) 22% 15%));
+}
+[data-theme="dark"] .art svg { filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .45)); }
+[data-theme="dark"] .art img { filter: brightness(.9) saturate(.95); }
+
+/* الشارات والحالات */
+[data-theme="dark"] .badge-gold, [data-theme="dark"] .status-chip.new, [data-theme="dark"] .status-pill.new { background: rgba(207, 165, 107, .16); color: #e8c595; }
+[data-theme="dark"] .badge-sea, [data-theme="dark"] .status-chip.ready, [data-theme="dark"] .status-pill.ready { background: rgba(116, 180, 143, .16); color: #9fd4b4; }
+[data-theme="dark"] .badge-coral, [data-theme="dark"] .status-chip.cancelled, [data-theme="dark"] .row-ic.coral,
+[data-theme="dark"] .margin-hint.bad, [data-theme="dark"] .btn-danger.is-armed { background: rgba(224, 141, 108, .16); color: #f2ae93; }
+[data-theme="dark"] .status-chip.preparing, [data-theme="dark"] .status-pill.preparing { background: rgba(217, 165, 82, .16); color: #ecc27e; }
+
+/* العروض */
+[data-theme="dark"] .offer { background: linear-gradient(150deg, #2c2118, #231a14); box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(207, 165, 107, .22); }
+[data-theme="dark"] .offer-arts .art { box-shadow: 0 0 0 3px #2a1f17; }
+
+/* ───── صفحة الزبون ───── */
+[data-theme="dark"] .app-body { background: radial-gradient(80% 60% at 50% 0%, #2a1f17, transparent 70%), var(--abyss); }
+@media (min-width: 560px) {
+  [data-theme="dark"] .phone { box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .8), 0 0 0 10px #241b15, 0 0 0 11px rgba(236, 218, 194, .1); }
+}
+[data-theme="dark"] .tabbar { background: rgba(36, 27, 21, .92); box-shadow: 0 12px 30px -14px rgba(0, 0, 0, .8), inset 0 0 0 1px var(--line); }
+[data-theme="dark"] .sheet-hero .icon-btn, [data-theme="dark"] .pop-rank { background: rgba(26, 19, 15, .85); }
+[data-theme="dark"] .recipe h4 { color: var(--brass-hi); }
+[data-theme="dark"] .waiter-pill { background: rgba(224, 141, 108, .14); }
+[data-theme="dark"] .link-bar { background: #3a2b18; color: #ecc27e; box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(236, 194, 126, .2); }
+
+/* ───── لوحة الكاشير ───── */
+[data-theme="dark"] .side { background: linear-gradient(180deg, #33261c, #1f1712); }
+[data-theme="dark"] .nav-btn[aria-current="page"] { background: rgba(232, 197, 149, .16); color: var(--foam); }
+[data-theme="dark"] .nav-count { background: var(--gold-soft); color: #e8c595; }
+[data-theme="dark"] .bar { background: linear-gradient(180deg, var(--harbor) 75%, rgba(26, 19, 15, 0)); }
+[data-theme="dark"] .tile.t-new { background: linear-gradient(160deg, #4a3820, #3a2b18); }
+[data-theme="dark"] .tile.t-new .tile-no, [data-theme="dark"] .tile.t-new .tile-state { color: #f1d9ad; }
+[data-theme="dark"] .tile.t-preparing { background: #352a19; }
+[data-theme="dark"] .tile.t-ready { background: #1e3026; }
+[data-theme="dark"] .drawer-foot { background: rgba(36, 27, 21, .9); }
+[data-theme="dark"] .ocard.s-new { background: #33271b; }
+[data-theme="dark"] .onote { background: rgba(217, 165, 82, .14); color: #ecc27e; }
+[data-theme="dark"] .zone-card, [data-theme="dark"] .tcard { background: rgba(236, 218, 194, .04); }
+[data-theme="dark"] .stat-pill.profit, [data-theme="dark"] .kpi.profit { background: rgba(116, 180, 143, .14); box-shadow: inset 0 0 0 1px rgba(116, 180, 143, .25); }
+[data-theme="dark"] .stat-pill.profit, [data-theme="dark"] .stat-pill.profit .num,
+[data-theme="dark"] .kpi.profit strong, [data-theme="dark"] .ttable .profit-cell { color: #9fd4b4; }
+[data-theme="dark"] .close-warn, [data-theme="dark"] .close-warn .switch { background: rgba(224, 141, 108, .14); color: #f2ae93; }
+/* الـ QR لازم يضل على أبيض عشان ينقرأ */
+[data-theme="dark"] .tcard .qr, [data-theme="dark"] .site-qr .qr { background: #f4ece1; }
+@media (max-width: 980px) {
+  [data-theme="dark"] .side { background: rgba(31, 23, 18, .97); }
+}
+
+/* ───── زر المظهر ───── */
+.theme-btn { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: var(--foam-2); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.theme-btn:hover { color: var(--foam); background: rgba(var(--tint), .06); }
+.theme-btn svg { width: 20px; height: 20px; }
+.theme-pick { display: grid; gap: 10px; padding: 14px 16px; border-radius: 20px; background: var(--tide); box-shadow: var(--shadow-card), inset 0 0 0 1px var(--line); }
+.theme-pick > strong { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.theme-pick > strong svg { width: 20px; height: 20px; color: var(--gold); }
+.theme-pick .segmented { --n: 3; }
+.theme-pick .segmented button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.theme-pick .segmented svg { width: 16px; height: 16px; }
+
+</style>
 </head>
 <body class="admin">
   <div class="grain" aria-hidden="true"></div>
@@ -757,6 +875,7 @@ tr.is-current td { background: var(--gold-soft); }
         <div class="bar-right">
           <div class="bar-stats" id="barStats"></div>
           <span class="live" id="live" title="الاتصال المباشر"><i></i><span>مباشر</span></span>
+          <button class="theme-btn" type="button" id="themeBtn"></button>
           <span class="clock num" id="clock"></span>
         </div>
       </header>
@@ -973,8 +1092,9 @@ const fail = (r) => Object.assign(new Error(r.data?.error || 'صار خطأ، ج
 const CUSTOMER_ROUTES = [
   ['GET', /^\/menu$/], ['GET', /^\/weather$/], ['GET', /^\/tables\/\d{1,3}$/], ['GET', /^\/tables\/\d{1,3}\/bill$/],
   ['GET', /^\/orders\/[\w-]{1,40}$/], ['POST', /^\/orders$/], ['POST', /^\/tables\/\d{1,3}\/call$/], ['POST', /^\/barista$/],
+  ['GET', /^\/devices\/[a-z0-9]{8,40}\/orders$/],
 ];
-const isCustomerRoute = (method, path) => CUSTOMER_ROUTES.some(([m, re]) => m === method && re.test(path));
+const isCustomerRoute = (method, path) => CUSTOMER_ROUTES.some(([m, re]) => m === method && re.test(String(path).split('?')[0]));
 const LIMITS = [['POST', /^\/orders$/, 10], ['POST', /\/call$/, 6], ['POST', /^\/barista$/, 20]];
 const OFFLINE_MSG = 'ما قدرنا نوصل للكاشير هلق 😕 تأكد من الإنترنت وجرب كمان مرة.';
 
@@ -1049,7 +1169,7 @@ async function viaRelay(method, path, body) {
     }
     if (!err.offline) throw err;
     // القائمة والطقس ورقم الطاولة ونديم بالوضع الأساسي بيشتغلوا محلياً، أما الفاتورة فلازم الكاشير
-    if ((method === 'GET' && /^\/(menu|weather|tables\/\d+)$/.test(path)) || path === '/barista') {
+    if ((method === 'GET' && /^\/(menu|weather|tables\/\d+)$/.test(path.split('?')[0])) || path === '/barista') {
       const r = await local(method, path, body);
       if (r.status >= 400) throw fail(r);
       return clone(r.data);
@@ -1185,7 +1305,7 @@ __def("server/core.js", function (__e) {
 // قلب النظام: كل مسارات الـ API كدوال صافية (بدون Express ولا ملفات)
 // نفس الكود بيشغّل السيرفر الحقيقي، وبيشغّل نسخة الـ HTML المستقلة داخل المتصفح.
 const { db, save, uid, replaceAll } = __req("standalone/db-browser.js");
-const { publicMenu, createOrder, setOrderStatus, publicOrder, tableInsight, stats, setLinePrice, closeTable, tableBill, currentDay, closeDay, months, monthReport, maintain, OPEN_STATUSES, HttpError } = __req("server/logic.js");
+const { publicMenu, createOrder, setOrderStatus, publicOrder, tableInsight, stats, setLinePrice, closeTable, tableBill, currentDay, closeDay, months, monthReport, maintain, deviceOrders, tableOccupancy, OPEN_STATUSES, HttpError } = __req("server/logic.js");
 const { currentWeather, geocode } = __req("server/weather.js");
 const { chat } = __req("server/barista/index.js");
 const { aiStatus } = __req("server/barista/ai.js");
@@ -1288,17 +1408,20 @@ const route = (method, pattern, fn, { admin = false } = {}) => {
 // الزبون
 route('GET', '/menu', () => publicMenu());
 route('GET', '/weather', () => currentWeather());
-route('GET', '/tables/:n', ({ p }) => {
+route('GET', '/tables/:n', ({ p, q }) => {
   const info = tableInsight(p.n);
   if (!info) throw new HttpError(404, `ما في طاولة رقم ${p.n}.`);
   return {
     number: info.number, zone: info.zone?.name ?? '', seats: info.seats,
     top: info.topAtTable.map((x) => ({ id: x.id, name: x.name })),
+    // مشغولة = عليها طلبات مفتوحة؛ mine = الزبون نفسه من القاعدين عليها
+    ...tableOccupancy(info.number, { device: q.get('device'), session: str(q.get('session'), 40) }),
   };
 });
+route('GET', '/devices/:id/orders', ({ p }) => deviceOrders(p.id));
 route('GET', '/tables/:n/bill', ({ p }) => tableBill(p.n));
 route('POST', '/orders', ({ body }) => {
-  const order = createOrder({ table: body?.table, lines: body?.lines, note: body?.note, source: body?.source });
+  const order = createOrder({ table: body?.table, lines: body?.lines, note: body?.note, source: body?.source, device: body?.device });
   return { status: 201, data: publicOrder(order), events: [toAdmin('order:new', order)] };
 });
 route('GET', '/orders/:id', ({ p }) => {
@@ -2224,7 +2347,10 @@ function dayStart() {
   return new Date(db().settings.dayOpenedAt ?? new Date(new Date().setHours(0, 0, 0, 0)));
 }
 
-function createOrder({ table, lines, note, source }) {
+/** معرّف الجهاز اللي بيبعته جوال الزبون (عشوائي ومحفوظ عنده) — ما في موقع بيقدر يقرأ IP أو MAC الجهاز بشكل موثوق */
+const cleanDevice = (v) => (/^[a-z0-9]{8,40}$/.test(String(v ?? '')) ? String(v) : null);
+
+function createOrder({ table, lines, note, source, device }) {
   const d = db();
   const tableNo = Number(table);
   const t = d.tables.find((x) => x.number === tableNo);
@@ -2246,6 +2372,7 @@ function createOrder({ table, lines, note, source }) {
     note: String(note ?? '').slice(0, 200).trim(),
     status: 'new',
     source: source === 'barista' ? 'barista' : 'menu',
+    device: cleanDevice(device), // "تابع طلبي": بينمسح لما الكاشير يسكّر الطاولة
     createdAt: iso,
     updatedAt: iso,
     history: [{ status: 'new', at: iso }],
@@ -2303,11 +2430,36 @@ function closeTable(n) {
   const t = d.tables.find((x) => x.number === Number(n));
   const open = d.orders.filter((o) => o.table === Number(n) && OPEN_STATUSES.includes(o.status));
   for (const o of open) setOrderStatus(o.id, 'paid');
+  // الطاولة تسكّرت: بننسى أجهزة الزباين اللي طلبوا عليها، فـ"تابع طلبي" بيرجع فاضي عندهم
+  for (const o of d.orders) if (o.table === Number(n) && (open.includes(o) || (t?.sessionId && o.sessionId === t.sessionId))) delete o.device;
   if (t) { t.sessionId = null; t.sessionAt = null; }
   const hadCalls = d.calls.some((c) => c.table === Number(n));
   d.calls = d.calls.filter((c) => c.table !== Number(n));
   save();
   return { closed: open, hadCalls };
+}
+
+/** "تابع طلبي": طلبات هالجهاز اللي لسا طاولتها مفتوحة (الأحدث أولاً) */
+function deviceOrders(device) {
+  const id = cleanDevice(device);
+  if (!id) throw new HttpError(400, 'معرّف الجهاز غير صالح.');
+  const d = db();
+  const since = Date.now() - 24 * 3600_000;
+  return d.orders
+    .filter((o) => o.device === id && new Date(o.createdAt).getTime() >= since)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 20)
+    .map(publicOrder);
+}
+
+/** الطاولة مشغولة؟ (عليها طلبات مفتوحة) وإذا مشغولة، هل الزبون نفسه من القاعدين عليها */
+function tableOccupancy(n, { device = null, session = null } = {}) {
+  const d = db();
+  const t = d.tables.find((x) => x.number === Number(n));
+  const open = d.orders.filter((o) => o.table === Number(n) && OPEN_STATUSES.includes(o.status));
+  const id = cleanDevice(device);
+  const mine = open.length > 0 && ((id && open.some((o) => o.device === id)) || (Boolean(session) && t?.sessionId === session));
+  return { busy: open.length > 0, mine: Boolean(mine) };
 }
 
 /** فاتورة الطاولة الحالية للزبون (كل طلبات الجلسة المفتوحة) */
@@ -2560,7 +2712,7 @@ class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 
-Object.assign(__e, { STATUSES, OPEN_STATUSES, STATUS_LABELS, SUGAR_LABELS, effectivePrice, comboValue, publicSettings, zoneOf, publicMenu, priceLines, dayStart, createOrder, setOrderStatus, publicOrder, setLinePrice, closeTable, tableBill, currentDay, closeDay, topItems, tableInsight, stats, monthKey, maintain, months, monthReport, HttpError });
+Object.assign(__e, { STATUSES, OPEN_STATUSES, STATUS_LABELS, SUGAR_LABELS, effectivePrice, comboValue, publicSettings, zoneOf, publicMenu, priceLines, dayStart, cleanDevice, createOrder, setOrderStatus, publicOrder, setLinePrice, closeTable, deviceOrders, tableOccupancy, tableBill, currentDay, closeDay, topItems, tableInsight, stats, monthKey, maintain, months, monthReport, HttpError });
 });
 
 __def("server/weather.js", function (__e) {
@@ -4062,7 +4214,7 @@ Object.assign(__e, { BROKERS, randomId, cleanCode, siteCode, MqttLink, createHos
 
 __def("public/js/admin.js", function (__e) {
 'use strict';
-const { $, $$, esc, api, money, moneyText, toast, openSheet, closeSheet, chime, unlockAudio, timeAgo, STATUS, SUGAR } = __req("public/js/common.js");
+const { $, $$, esc, api, money, moneyText, toast, openSheet, closeSheet, chime, unlockAudio, timeAgo, STATUS, SUGAR, THEMES, themePref, setTheme } = __req("public/js/common.js");
 const { brandLogo, fitLogo, brandMark, artTile, itemArt, icon, ART_KEYS, ART_LABELS } = __req("public/js/art.js");
 
 const S = {
@@ -4153,8 +4305,24 @@ const VIEWS = [
   { id: 'reports', label: 'التقارير', ic: 'chart' },
   { id: 'settings', label: 'الإعدادات', ic: 'gear' },
 ];
+// المظهر: الزر بيلف فاتح ← غامق ← تلقائي
+function renderThemeBtn() {
+  const [, label, ic] = THEMES.find(([k]) => k === themePref()) ?? THEMES[2];
+  $('#themeBtn').innerHTML = icon(ic);
+  $('#themeBtn').title = `المظهر: ${label} (اضغط للتغيير)`;
+  $('#themeBtn').setAttribute('aria-label', `المظهر: ${label}`);
+}
+function cycleTheme() {
+  const keys = THEMES.map(([k]) => k);
+  setTheme(keys[(keys.indexOf(themePref()) + 1) % keys.length]);
+  renderThemeBtn();
+  toast(`المظهر: ${THEMES.find(([k]) => k === themePref())[1]}`, 'ok');
+  if (S.view === 'settings') renderSettings();
+}
+
 function renderShell() {
   const s = S.data.settings;
+  renderThemeBtn();
   document.title = `لوحة الكاشير — ${s.cafeName}`;
   $('#sideBrand').innerHTML = `${brandMark(s.cafeName)}<small>لوحة الكاشير</small>`;
   renderNav();
@@ -5206,6 +5374,10 @@ function renderSettings() {
     <div class="settings-grid">
       <section class="panel">
         <div class="panel-head"><h2>الهوية</h2></div>
+        <div class="field">
+          <span>المظهر</span>
+          <div class="segmented" style="--n:3" role="radiogroup" aria-label="المظهر">${THEMES.map(([k, label, ic]) => `<button type="button" role="radio" data-theme-set="${k}" aria-pressed="${themePref() === k}" aria-checked="${themePref() === k}" style="display:inline-flex;align-items:center;justify-content:center;gap:6px">${icon(ic)}${label}</button>`).join('')}</div>
+        </div>
         <div class="logo-preview" id="logoPreview"></div>
         <div class="form-grid">
           <label class="field"><span>اسم المحل</span><input class="input" id="s_name" value="${esc(s.cafeName)}" maxlength="40"></label>
@@ -5418,6 +5590,8 @@ function bind() {
     }
     if (t.id === 'printCards') return printTableCards();
     if (t.id === 'copyLink') return copyCustomerLink();
+    if (t.id === 'themeBtn') return cycleTheme();
+    if (d.themeSet) { setTheme(d.themeSet); renderThemeBtn(); return renderSettings(); }
     if (t.id === 'takeoverBtn') { relay?.takeover(); return toast('هلق هالجهاز هو الكاشير ✓', 'ok'); }
     if (t.id === 'saveGemini') return saveGeminiKey();
     if (t.id === 'backupBtn') return downloadBackup();
@@ -5736,6 +5910,26 @@ function timeAgo(iso) {
   return h === 1 ? 'من ساعة' : `من ${h} ساعات`;
 }
 
+// ───────── المظهر: فاتح / غامق / تلقائي (حسب إعداد الجهاز) ─────────
+const THEME_KEY = 'cm.theme';
+const darkQuery = window.matchMedia?.('(prefers-color-scheme: dark)');
+const THEMES = [['light', 'فاتح', 'sun'], ['dark', 'غامق', 'moon'], ['auto', 'تلقائي', 'contrast']];
+function themePref() {
+  try { return localStorage.getItem(THEME_KEY) || 'auto'; } catch { return 'auto'; }
+}
+function applyTheme(pref = themePref()) {
+  const dark = pref === 'dark' || (pref === 'auto' && Boolean(darkQuery?.matches));
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#1a130f' : '#f4ece1');
+  return dark;
+}
+function setTheme(pref) {
+  try { localStorage.setItem(THEME_KEY, pref); } catch { /* */ }
+  applyTheme(pref);
+}
+darkQuery?.addEventListener?.('change', () => { if (themePref() === 'auto') applyTheme(); });
+applyTheme();
+
 const STATUS = {
   new: { label: 'طلب جديد', short: 'جديد' },
   preparing: { label: 'قيد التحضير', short: 'تحضير' },
@@ -5762,7 +5956,7 @@ function revealOnScroll(root = document) {
   els.forEach((e) => io.observe(e));
 }
 
-Object.assign(__e, { $, $$, esc, reducedMotion, money, moneyText, api, toast, openSheet, closeSheet, chime, unlockAudio, timeAgo, STATUS, SUGAR, revealOnScroll });
+Object.assign(__e, { $, $$, esc, reducedMotion, money, moneyText, api, toast, openSheet, closeSheet, chime, unlockAudio, timeAgo, THEMES, themePref, applyTheme, setTheme, STATUS, SUGAR, revealOnScroll });
 });
 
 __def("public/js/art.js", function (__e) {
@@ -5990,6 +6184,7 @@ const UI = {
   logout: '<path d="M14 4h5v16h-5"/><path d="M10 8l-4 4 4 4M6 12h10"/>',
   sound: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>',
   mute: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l4 6M21 9l-4 6"/>',
+  contrast: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/>',
   clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   image: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/>',
   qr: '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/>',
