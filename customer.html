@@ -862,7 +862,17 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 @media (min-width: 560px) {
   [data-theme="dark"] .phone { box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .8), 0 0 0 10px #251710, 0 0 0 11px rgba(245, 236, 229, .1); }
 }
-[data-theme="dark"] .tabbar { background: rgba(37, 23, 16, .94); box-shadow: 0 12px 30px -14px rgba(0, 0, 0, .8), inset 0 0 0 1px var(--line); }
+/* الشريط السفلي وشريط البحث: أبيض كريمي فوق الشوكولاتة (طلب صاحب المحل) */
+[data-theme="dark"] .tabbar { background: rgba(251, 248, 245, .97); box-shadow: 0 14px 34px -12px rgba(0, 0, 0, .9); }
+[data-theme="dark"] .tabbar button { color: #7a685d; }
+[data-theme="dark"] .tabbar button[aria-current="page"] { color: #4a2c1d; }
+[data-theme="dark"] .tabbar button[aria-current="page"]::before { background: #d4a359; }
+[data-theme="dark"] .tab-dot { box-shadow: 0 0 0 2px #fbf8f5; }
+[data-theme="dark"] .search { background: #fbf8f5; box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .8); }
+[data-theme="dark"] .search svg { color: #7a685d; }
+[data-theme="dark"] .search-input { color: #2b1a12; }
+[data-theme="dark"] .search-input::placeholder { color: #8f7d70; }
+[data-theme="dark"] .search:focus-within { box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .8), inset 0 0 0 1.5px #d4a359; }
 [data-theme="dark"] .sheet-hero .icon-btn, [data-theme="dark"] .pop-rank { background: rgba(22, 13, 8, .85); }
 [data-theme="dark"] .recipe h4 { color: var(--brass-hi); }
 [data-theme="dark"] .waiter-pill { background: rgba(224, 141, 108, .14); }
@@ -1496,6 +1506,8 @@ function validateItem(body) {
     recipe: str(body?.recipe, 400),
     price: num(body?.price, { min: 0, max: 10000 }),
     cost: num(body?.cost === '' || body?.cost == null ? 0 : body.cost, { min: 0, max: 10000 }),
+    // الكمية بالمخزن: فاضي = مش محسوب
+    stock: body?.stock === '' || body?.stock == null ? null : Math.round(num(body.stock, { min: 0, max: 100000 })),
     sugar: Math.round(num(body?.sugar ?? 1, { min: 0, max: 3 })),
     caffeine: Math.round(num(body?.caffeine ?? 0, { min: 0, max: 3 })),
     tags: (Array.isArray(body?.tags) ? body.tags : String(body?.tags ?? '').split(/[،,]/)).map((t) => str(t, 20)).filter(Boolean).slice(0, 8),
@@ -1554,7 +1566,9 @@ route('GET', '/devices/:id/orders', ({ p }) => deviceOrders(p.id));
 route('GET', '/tables/:n/bill', ({ p }) => tableBill(p.n));
 route('POST', '/orders', ({ body }) => {
   const order = createOrder({ table: body?.table, lines: body?.lines, note: body?.note, source: body?.source, device: body?.device });
-  return { status: 201, data: publicOrder(order), events: [toAdmin('order:new', order)] };
+  // إذا الطلب أخد من المخزن، قائمة الزباين بتتحدّث (ممكن صنف صار "نفد" أو "باقي 2")
+  const stockMoved = Object.keys(order.stockTaken ?? {}).length > 0;
+  return { status: 201, data: publicOrder(order), events: [toAdmin('order:new', order), ...(stockMoved ? [toAll('menu:changed')] : [])] };
 });
 route('GET', '/orders/:id', ({ p }) => {
   const order = db().orders.find((o) => o.id === p.id);
@@ -1612,7 +1626,8 @@ route('GET', '/admin/orders', ({ q }) => {
 }, { admin: true });
 route('PATCH', '/admin/orders/:id', ({ p, body }) => {
   const order = setOrderStatus(p.id, str(body?.status, 20));
-  return { data: order, events: orderEvents(order) };
+  const restocked = order.status === 'cancelled' && Object.keys(order.stockTaken ?? {}).length > 0;
+  return { data: order, events: [...orderEvents(order), ...(restocked ? [toAll('menu:changed')] : [])] };
 }, { admin: true });
 route('POST', '/admin/tables/:n/close', ({ p }) => {
   const n = Number(p.n);
@@ -2535,13 +2550,18 @@ function publicMenu() {
   const d = db();
   const items = d.items.map((it) => {
     const p = effectivePrice(it);
-    return { ...it, price: p.price, was: p.was, offerId: p.offerId };
+    // التكلفة والمخزن للكاشير بس: الزبون بيشوف "نفد" أو "باقي 3" لما الكمية قليلة
+    const { cost, stock, ...pub } = it;
+    return {
+      ...pub, price: p.price, was: p.was, offerId: p.offerId,
+      available: inStock(it), left: tracked(it) && Number(stock) <= LOW_STOCK ? Number(stock) : null,
+    };
   });
   const offers = d.offers.filter((o) => o.active).map((o) => ({
     ...o,
     value: o.type === 'combo' ? comboValue(o) : null,
     names: o.itemIds.map((id) => d.items.find((i) => i.id === id)?.name).filter(Boolean),
-    available: o.itemIds.every((id) => d.items.find((i) => i.id === id)?.available),
+    available: o.itemIds.every((id) => inStock(d.items.find((i) => i.id === id))),
   }));
   return {
     settings: publicSettings(),
@@ -2554,6 +2574,40 @@ function publicMenu() {
 }
 
 /** يحوّل سطور السلة القادمة من الزبون إلى سطور طلب مسعّرة من السيرفر (لا نثق بأسعار المتصفح) */
+// ───────── المخزن ─────────
+// stock: null = الصنف مش محسوب بالمخزن (بيضل متوفر)، رقم = الكمية الموجودة. لما توصل صفر بيصير "نفد" لحاله.
+const tracked = (item) => item?.stock != null && item.stock !== '';
+const inStock = (item, qty = 1) => Boolean(item) && item.available !== false && (!tracked(item) || Number(item.stock) >= qty);
+const LOW_STOCK = 5;
+
+/** الكميات اللي بياخدها الطلب من المخزن لكل صنف (العروض بتاخد من أصنافها) */
+function stockNeeds(lines) {
+  const d = db();
+  const need = {};
+  for (const l of lines) {
+    const ids = l.kind === 'offer' ? (d.offers.find((o) => o.id === l.refId)?.itemIds ?? []) : [l.refId];
+    for (const id of ids) need[id] = (need[id] ?? 0) + l.qty;
+  }
+  return need;
+}
+function checkStock(need) {
+  const d = db();
+  for (const [id, qty] of Object.entries(need)) {
+    const item = d.items.find((i) => i.id === id);
+    if (!item || !tracked(item)) continue;
+    if (Number(item.stock) <= 0) throw new HttpError(409, `"${item.name}" نفد من المخزن حالياً، احذفه من السلة وكمّل.`);
+    if (Number(item.stock) < qty) throw new HttpError(409, `ضل من "${item.name}" ${item.stock} بس، نزّل الكمية وكمّل.`);
+  }
+}
+/** sign = -1 لما ينطلب، +1 لما ينلغى الطلب (بترجع الكمية) */
+function moveStock(taken, sign) {
+  const d = db();
+  for (const [id, qty] of Object.entries(taken ?? {})) {
+    const item = d.items.find((i) => i.id === id);
+    if (item && tracked(item)) item.stock = Math.max(0, Number(item.stock) + sign * qty);
+  }
+}
+
 function priceLines(rawLines) {
   const d = db();
   if (!Array.isArray(rawLines) || rawLines.length === 0) throw new HttpError(400, 'السلة فاضية.');
@@ -2568,7 +2622,7 @@ function priceLines(rawLines) {
       const offer = d.offers.find((o) => o.id === raw.id && o.active && o.type === 'combo');
       if (!offer) throw new HttpError(400, 'هذا العرض لم يعد متوفراً.');
       const parts = offer.itemIds.map((id) => d.items.find((i) => i.id === id));
-      if (parts.some((p) => !p || !p.available)) throw new HttpError(409, `أحد أصناف عرض "${offer.title}" نفد حالياً.`);
+      if (parts.some((p) => !inStock(p))) throw new HttpError(409, `أحد أصناف عرض "${offer.title}" نفد حالياً.`);
       const value = comboValue(offer);
       lines.push({
         kind: 'offer', refId: offer.id, name: `عرض ${offer.title}`, unitPrice: offer.price, qty,
@@ -2580,7 +2634,7 @@ function priceLines(rawLines) {
     } else {
       const item = d.items.find((i) => i.id === raw?.id);
       if (!item) throw new HttpError(400, 'صنف غير معروف في السلة.');
-      if (!item.available) throw new HttpError(409, `"${item.name}" نفد حالياً، احذفه من السلة وكمّل.`);
+      if (!inStock(item)) throw new HttpError(409, `"${item.name}" نفد حالياً، احذفه من السلة وكمّل.`);
       const p = effectivePrice(item);
       const sugar = item.sugarChoice && SUGAR_LABELS[raw?.options?.sugar] ? raw.options.sugar : undefined;
       lines.push({
@@ -2594,7 +2648,9 @@ function priceLines(rawLines) {
   }
   const total = round(lines.reduce((s, l) => s + l.lineTotal, 0));
   const cost = round(lines.reduce((s, l) => s + l.unitCost * l.qty, 0));
-  return { lines, subtotal: round(subtotal), discount: round(discount), total, cost };
+  const stockTaken = stockNeeds(lines);
+  checkStock(stockTaken);
+  return { lines, subtotal: round(subtotal), discount: round(discount), total, cost, stockTaken };
 }
 
 /** بداية يوم العمل الحالي (من آخر "إغلاق المحل") */
@@ -2632,6 +2688,9 @@ function createOrder({ table, lines, note, source, device }) {
     updatedAt: iso,
     history: [{ status: 'new', at: iso }],
   };
+  // بننقص المخزن، وبنحفظ شو أخدنا عشان يرجع إذا انلغى الطلب
+  order.stockTaken = Object.fromEntries(Object.entries(order.stockTaken ?? {}).filter(([id]) => tracked(d.items.find((i) => i.id === id))));
+  moveStock(order.stockTaken, -1);
   d.orders.push(order);
   save();
   return order;
@@ -2642,6 +2701,7 @@ function setOrderStatus(id, status) {
   const order = db().orders.find((o) => o.id === id);
   if (!order) throw new HttpError(404, 'الطلب غير موجود.');
   if (order.status === status) return order;
+  if (status === 'cancelled' && OPEN_STATUSES.includes(order.status)) moveStock(order.stockTaken, +1);
   order.status = status;
   order.updatedAt = new Date().toISOString();
   (order.history ??= []).push({ status, at: order.updatedAt });
@@ -2967,7 +3027,7 @@ class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 
-Object.assign(__e, { STATUSES, OPEN_STATUSES, STATUS_LABELS, SUGAR_LABELS, effectivePrice, comboValue, publicSettings, zoneOf, publicMenu, priceLines, dayStart, cleanDevice, createOrder, setOrderStatus, publicOrder, setLinePrice, closeTable, deviceOrders, tableOccupancy, tableBill, currentDay, closeDay, topItems, tableInsight, stats, monthKey, maintain, months, monthReport, HttpError });
+Object.assign(__e, { STATUSES, OPEN_STATUSES, STATUS_LABELS, SUGAR_LABELS, effectivePrice, comboValue, publicSettings, zoneOf, publicMenu, tracked, inStock, LOW_STOCK, priceLines, dayStart, cleanDevice, createOrder, setOrderStatus, publicOrder, setLinePrice, closeTable, deviceOrders, tableOccupancy, tableBill, currentDay, closeDay, topItems, tableInsight, stats, monthKey, maintain, months, monthReport, HttpError });
 });
 
 __def("server/weather.js", function (__e) {
@@ -3126,7 +3186,7 @@ __def("server/barista/context.js", function (__e) {
 'use strict';
 // يجمع كل ما يحتاجه الباريستا ليقترح بذكاء: القائمة بأسعارها الفعلية، الطقس، الطاولة، الأكثر طلباً، والسلة
 const { db } = __req("standalone/db-browser.js");
-const { effectivePrice, comboValue, topItems, tableInsight } = __req("server/logic.js");
+const { effectivePrice, comboValue, topItems, tableInsight, inStock, tracked, LOW_STOCK } = __req("server/logic.js");
 const { currentWeather } = __req("server/weather.js");
 
 const toWestern = (s) => String(s).replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
@@ -3154,16 +3214,22 @@ function detectTable(text, lastBotText = '') {
 async function buildContext({ table, cart = [] }) {
   const d = db();
   const now = new Date();
-  const items = d.items.filter((i) => i.available).map((i) => {
+  // نديم بيراجع المخزن: المتوفر بس بيقترحه، واللي نفد بيعرف إنه موجود بالقائمة بس مش متوفر هلأ
+  const items = d.items.filter((i) => inStock(i)).map((i) => {
     const p = effectivePrice(i);
     const cat = d.categories.find((c) => c.id === i.categoryId);
     return {
       id: i.id, name: i.name, desc: i.desc, recipe: i.recipe ?? '', category: cat?.name ?? '', temp: cat?.temp ?? null,
       price: p.price, was: p.was, sugar: i.sugar ?? 1, caffeine: i.caffeine ?? 0,
       tags: i.tags ?? [], sugarChoice: !!i.sugarChoice, categoryId: i.categoryId,
+      left: tracked(i) && Number(i.stock) <= LOW_STOCK ? Number(i.stock) : null,
     };
   });
-  const offers = d.offers.filter((o) => o.active && o.itemIds.every((id) => d.items.find((i) => i.id === id)?.available)).map((o) => ({
+  const outOfStock = d.items.filter((i) => !inStock(i)).map((i) => ({
+    id: i.id, name: i.name, categoryId: i.categoryId, category: d.categories.find((c) => c.id === i.categoryId)?.name ?? '',
+    tags: i.tags ?? [], caffeine: i.caffeine ?? 0,
+  }));
+  const offers = d.offers.filter((o) => o.active && o.itemIds.every((id) => inStock(d.items.find((i) => i.id === id)))).map((o) => ({
     id: o.id, type: o.type, title: o.title, description: o.description, price: o.price, percent: o.percent,
     value: o.type === 'combo' ? comboValue(o) : null,
     names: o.itemIds.map((id) => d.items.find((i) => i.id === id)?.name),
@@ -3180,6 +3246,7 @@ async function buildContext({ table, cart = [] }) {
 
   return {
     settings: d.settings,
+    outOfStock,
     tableCount: d.tables.length,
     time: { hour: now.getHours(), dayPart: dayPart(now.getHours()), weekday: now.toLocaleDateString('ar', { weekday: 'long' }) },
     weather: await currentWeather(),
@@ -3440,6 +3507,7 @@ function stablePrompt(ctx) {
       `حلاوة ${i.sugar}/3`, `كافيين ${i.caffeine}/3`,
       i.sugarChoice ? 'السكر حسب الطلب' : '',
       i.tags.length ? `وسوم: ${i.tags.join('، ')}` : '',
+      i.left != null ? `⚠ المخزن: باقي ${i.left} بس` : '',
       `— ${i.desc}`,
       i.recipe ? `المكونات: ${i.recipe}` : '',
     ].filter(Boolean);
@@ -3457,9 +3525,10 @@ function stablePrompt(ctx) {
 أسلوبك:
 - احكِ باللهجة الفلسطينية الشامية بس (بدّي، هلأ، كتير، منيح، شو، ليش)، مش مصري ولا خليجي (لا "أوي" ولا "إزيك" ولا "حنعمل" ولا "وش"). دافئ وذوق وخفيف دم. إيموجي واحد بالكثير.
 - أنت مش آلة اقتراحات، أنت باريستا بيحب شغله وبيحب الحكي: تناقش مع الزبون، اسأله سؤال متابعة واحد لما يفيد (بتحبها قوية ولا خفيفة؟ بحليب ولا سادة؟ بدك اشي يصحصحك ولا يرويك؟)، اشرحله الفرق بين المشروبات لما يسأل، احكيله عن القهوة وطرق تحضيرها، وجاوبه إذا اعترض أو غيّر رأيه وعدّل اقتراحك.
-- خذ راحتك بالحكي: إذا بده يدردش (كيفك، شو أخبارك، نكتة، كورة، دراسة، شغل، يومه كان صعب) دردش معه بطبيعية وخفة دم متل باريستا ابن البلد، وجاوب الأسئلة العامة باختصار وبصدق. مش لازم كل رد يكون فيه اقتراح؛ اربطها بمشروب بس لما تيجي المناسبة وبدون إلحاح.
+- خذ راحتك بالحكي، إنت مش روبوت طلبات: دردش مع الزبون عن أي اشي محترم (يومه، شغله، دراسته، كورة، أكل، سفر، قهوة وتاريخها وطرق تحضيرها)، احكيله قصة أو معلومة حلوة أو نكتة، اسأله عن رأيه، وخلّي إلك رأي وشخصية. جاوب الأسئلة العامة بصدق، وإذا ما بتعرف قول ما بعرف. مش لازم كل رد يكون فيه اقتراح؛ اربطها بالقائمة بس لما تيجي المناسبة وبدون إلحاح.
+- المخزن: قبل ما تحكي عن صنف أو تقترحه راجع وضعه. إذا الصنف موجود بالقائمة بس نفد (بقائمة "مش متوفر حالياً" تحت) قل بوضوح "للأسف خلص من عنا هلأ، مش متوفر حالياً" واقترح أقرب بديل متوفر. إذا مكتوب "باقي X بس" نبّهه إنه قرب يخلص. وإذا مش بالقائمة أصلاً احكيله إنه مش من أصنافنا.
 - إذا طلب اشي مش بالقائمة (شاورما، بيتزا، أركيلة، بيبسي…): قله بصراحة ولطف إنه مش موجود عنا، واقترح أقرب اشي من القائمة بداله (مثلاً بدل البرجر: ساندويش حلّوم أو كرواسون زعتر). ما تحكي "مش فاهم" وما تتجاهل طلبه.
-- الرد عادةً جملتين لأربع جمل؛ أطول شوي بس إذا الزبون طلب شرح.
+- الرد عادةً جملتين لخمس جمل، وبتطوّل لما الحكي بيطوّل أو الزبون بده شرح أو قصة. خليك طبيعي، مش رسمي.
 - كن محدداً: اذكر اسم الصنف وسعره، ولما تقترح أكثر من صنف اذكر المجموع.
 - أنت ما بتبعت الطلب بنفسك: الاقتراحات بتطلع للزبون كبطاقات فيها زر "أضف للسلة"، فخلّيه يضغط عليها.
 - في زر "نادِ نادل" دايماً ظاهر للزبون. إذا طلب يحكي مع إنسان/نادل/موظف، أو عنده مشكلة بالطلب، أو حساسية، أو بده الحساب، حط offer_waiter = true وقله يضغط الزر وبيجيه حدا من الفريق.
@@ -3479,6 +3548,9 @@ function stablePrompt(ctx) {
 - الواي فاي: ${s.wifi || 'غير مذكور'}
 - الدوام: ${s.hours || 'غير مذكور'}
 ${s.cafeNotes ? `- ملاحظات من صاحب المحل: ${s.cafeNotes}` : ''}
+
+مش متوفر حالياً (نفد من المخزن — ما تقترحه، وإذا سأل عنه قله إنه خلص هلأ):
+${ctx.outOfStock?.length ? ctx.outOfStock.map((o) => `- ${o.name} [${o.category}]`).join('\n') : '- كل الأصناف متوفرة'}
 
 القائمة (المتوفر فقط، وكل الاقتراحات منها):
 ${menu}
@@ -3813,6 +3885,19 @@ function basicBarista(ctx, history, freshTable) {
       : { reply: 'ساعات الدوام بيأكدلك ياها النادل، اضغط "نادِ نادل" إذا بدك تعرف بالضبط 🙂', suggestions: [], offerWaiter: true };
   }
 
+  // راجعنا المخزن: الصنف موجود بالقائمة بس خلص
+  const gone = findItems(lastUser?.text ?? '', ctx.outOfStock ?? []);
+  if (gone.length && !findItems(lastUser?.text ?? '', ctx.items).length) {
+    const g = gone[0];
+    // البديل الأقرب: نفس القسم، وأكتر وسوم مشتركة (قهوة بحليب بدل قهوة بحليب)، وبعدين الأكثر طلباً
+    const near = (i) => (i.tags ?? []).filter((t) => (g.tags ?? []).includes(t)).length * 10 - Math.abs((i.caffeine ?? 0) - (g.caffeine ?? 0)) * 3 + (popRank[i.id] ?? 0) / 4;
+    const alt = ctx.items.filter((i) => i.categoryId === g.categoryId).sort((a, b) => near(b) - near(a)).slice(0, 2);
+    return {
+      reply: `للأسف ${g.name} خلص من عنا هلأ، مش متوفر حالياً 🙏${alt.length ? ` بس عنا ${alt.map((i) => `${i.name} (${fmt(i.price, cur)})`).join(' أو ')}، بتحب تجرّب؟` : ''}`,
+      suggestions: alt.map((i) => ({ item_id: i.id, qty: 1, sugar: '', for_whom: '' })),
+    };
+  }
+
   // شرح صنف أو المقارنة بين صنفين
   const mentioned = findItems(lastUser?.text ?? '', ctx.items);
   const asksAbout = /شو|ايش|من شو|مكونات|بتتكون|بيتكون|مكون|يعني|الفرق|فرق|كيف بتعملو|بتعملوه|احكيلي عن|عرفني|اشرح|شرح|طعمه|طعمها|قوي|خفيف/.test(q.t);
@@ -3839,8 +3924,11 @@ function basicBarista(ctx, history, freshTable) {
       sugar === 'none' ? 'وبنعمله بدون سكر متل ما بدك' : i.sugarChoice ? 'والسكر حسب ما بتحب' : '',
     ].filter(Boolean).join('، ');
     if (wantsIt && !asksAbout) {
+      if (i.left != null && i.left < qty) {
+        return { reply: `ضل من ${i.name} ${i.left} بس بالمخزن 🙏 بتحب آخد ${i.left}؟`, suggestions: [{ item_id: i.id, qty: i.left, sugar, for_whom: '' }] };
+      }
       return {
-        reply: `من عيوني! ${qty > 1 ? `${qty} × ` : ''}${i.name}${qty > 1 ? ` = ${fmt(i.price * qty, cur)}` : ` بـ${fmt(i.price, cur)}`}${notes ? `، ${notes}` : ''}. اضغط "أضف للسلة" تحت وبيوصلك ع الطاولة ☕`,
+        reply: `من عيوني! ${qty > 1 ? `${qty} × ` : ''}${i.name}${qty > 1 ? ` = ${fmt(i.price * qty, cur)}` : ` بـ${fmt(i.price, cur)}`}${notes ? `، ${notes}` : ''}${i.left != null ? ` (الحق حالك، باقي ${i.left} بس)` : ''}. اضغط "أضف للسلة" تحت وبيوصلك ع الطاولة ☕`,
         suggestions: [{ item_id: i.id, qty, sugar, for_whom: '' }],
       };
     }
@@ -4646,7 +4734,8 @@ function itemRow(it) {
         <p>${esc(it.desc)}</p>
         <span class="price"><b>${priceText(it.price).split(' ')[0]}</b> ${esc(S().currencyName || S().currency)}${it.was ? `<s>${priceText(it.was)}</s>` : ''}</span>
         <span class="badges">
-          ${!it.available ? '<span class="badge badge-mute">نفد اليوم</span>' : ''}
+          ${!it.available ? '<span class="badge badge-mute">مش متوفر حالياً</span>' : ''}
+          ${it.available && it.left ? `<span class="badge badge-coral">باقي ${it.left} بس</span>` : ''}
           ${it.was ? '<span class="badge badge-coral">عرض</span>' : ''}
           ${popular && it.available ? `<span class="badge badge-gold">${icon('star')}مطلوب</span>` : ''}
         </span>
@@ -4917,7 +5006,7 @@ function openItem(id) {
   $('#itemBody').innerHTML = `
     <div class="sheet-hero">${artTile(it, 'big')}<button class="icon-btn" type="button" data-close-sheet aria-label="إغلاق">${icon('close')}</button></div>
     <h2 class="detail-name" id="itemTitle">${esc(it.name)}</h2>
-    <div class="detail-price">${priceText(it.price)}${it.was ? `<s>${priceText(it.was)}</s>` : ''}${it.available ? '' : '<span class="badge badge-mute">نفد اليوم</span>'}</div>
+    <div class="detail-price">${priceText(it.price)}${it.was ? `<s>${priceText(it.was)}</s>` : ''}${it.available ? (it.left ? `<span class="badge badge-coral">باقي ${it.left} بس</span>` : '') : '<span class="badge badge-mute">مش متوفر حالياً</span>'}</div>
     <p class="detail-desc">${esc(it.desc)}</p>
     ${it.recipe ? `<div class="recipe"><h4>${icon('leaf')}من شو بيتكوّن</h4><p>${esc(it.recipe)}</p></div>` : ''}
     <div class="meters">${meter('الحلاوة', it.sugar)}${meter('الكافيين', it.caffeine)}</div>
@@ -4935,7 +5024,7 @@ function renderItemFoot() {
     <div class="foot-row">
       <div class="stepper"><button type="button" data-step="1" aria-label="زيادة">${icon('plus')}</button><output>${draft.qty}</output><button type="button" data-step="-1" aria-label="إنقاص">${icon('minus')}</button></div>
       <button class="btn btn-brass" id="itemAdd" type="button">إضافة إلى الطلب · ${priceText(it.price * draft.qty)}</button>
-    </div>` : '<p class="muted center">هالصنف نفد اليوم، جرّب اشي ثاني.</p>';
+    </div>` : '<p class="muted center">هالصنف مش متوفر حالياً، جرّب اشي ثاني أو اسأل نديم عن بديل.</p>';
 }
 
 // ───────── 5. ساعدنا نختارك ─────────
