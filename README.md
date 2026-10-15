@@ -1,8 +1,16 @@
-# كافي محمد — نظام طلب من الطاولة
+# ☕ CoffeeFlow — تجربة منصة الطلب الذكي للكافيهات والمطاعم
 
-نسخة عرض لنظام طلب إلكتروني للكافيهات.
+هاد المستودع هو **موقع التجربة** (GitHub Pages). الكود الكامل والتوثيق: https://github.com/mohammed131207/cafe-mohammad-code
 
-- **صفحة الزبون:** `customer.html` (بيكتب رقم طاولته وبيطلب، وبيسأل الباريستا نديم)
-- **لوحة الكاشير:** `admin.html` (رمز الدخول 1234)
+## 🔗 روابط التجربة
 
-البيانات بنسخة العرض بتنحفظ بمتصفح كل جهاز لحاله. افتح الصفحتين بنفس المتصفح لتشوف الطلب يوصل للوحة مباشرة.
+| شو | الرابط | ملاحظة |
+|---|---|---|
+| 🏠 صفحة التجربة (كل الروابط) | https://mohammed131207.github.io/cafe-mohammad/ | ابدأ من هون |
+| 🧭 لوحة منصة CoffeeFlow | https://mohammed131207.github.io/cafe-mohammad/platform.html | بتدخل لحالها بحساب التجربة (`demo` / `coffeeflow`) |
+| ☕ كافي محمد: صفحة الزبون | https://mohammed131207.github.io/cafe-mohammad/customer.html | محل 1001 (كافيه) |
+| ☕ كافي محمد: لوحة الكاشير | https://mohammed131207.github.io/cafe-mohammad/admin.html | الرمز 1234 |
+| 🍽️ مطعم السرايا: صفحة الزبون | https://mohammed131207.github.io/cafe-mohammad/customer.html?store=1002 | محل 1002 (مطعم) |
+| 🍽️ مطعم السرايا: لوحة الكاشير | https://mohammed131207.github.io/cafe-mohammad/admin.html?store=1002 | الرمز 1234 |
+
+نسخة التجربة بتشتغل بالمتصفح بس: كل زائر إله بياناته بمتصفحه. الملفات هون مبنية من الكود بأمر `npm run build:html` (ما تعدّلها يدوياً).
