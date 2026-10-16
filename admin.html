@@ -11,6 +11,23 @@
       var dark = t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
     } catch (e) { /* */ }
+    // نوع المحل وثيم ألوانه من آخر زيارة (عشان ما تومض ألوان غلط لحد ما تيجي الإعدادات)
+    try {
+      var mt = location.pathname.match(/^\/(\d{3,8})(?:\/|$)/);
+      var st = (new URLSearchParams(location.search).get('store') || '').replace(/\D/g, '');
+      var tn = mt ? mt[1] : (st && st !== '1001' ? st : '');
+      var pre = 'cm.' + (tn ? tn + '.' : '');
+      var biz = localStorage.getItem(pre + 'biz');
+      if (biz) document.documentElement.dataset.biz = biz;
+      var pal = localStorage.getItem(pre + 'palette.admin');
+      if (pal) {
+        var ps = document.createElement('style');
+        ps.id = 'cfPalette';
+        ps.textContent = pal;
+        document.head.appendChild(ps);
+        document.documentElement.dataset.palette = 'cached';
+      }
+    } catch (e) { /* */ }
   </script>
   <title>لوحة الكاشير — كافي محمد</title>
   <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMCI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNmU0ZjFkIi8+PHN0b3Agb2Zmc2V0PSIuMyIgc3RvcC1jb2xvcj0iI2Q5YjQ2YyIvPjxzdG9wIG9mZnNldD0iLjUiIHN0b3AtY29sb3I9IiNmNmUzYjQiLz48c3RvcCBvZmZzZXQ9Ii43MiIgc3RvcC1jb2xvcj0iI2M3OWE0ZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlNDIxNyIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjE2IiBmaWxsPSIjMGIxZjI0Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOSA0KSBzY2FsZSguNCkiPjxwYXRoIGQ9Ik00MiAxMDJDMjYgOTQgMTUgNzYgNyA1MmMtMS0zIDIuNS00LjUgNC41LTJDMjEgNzAgMzIgODQgNDcgOTB6IiBmaWxsPSJ1cmwoI2cpIi8+PHBhdGggZD0iTTc2IDcyYzIyLTIgMjggMjYgMTAgNDQiIGZpbGw9Im5vbmUiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMzggMTI4QzI3IDExNCAyOCA5OCA0NCA4NmM1LTQgNi0xMiAyLTE5aDI4Yy00IDctMyAxNSAyIDE5IDE2IDEyIDE3IDI4IDYgNDJ6IiBmaWxsPSJ1cmwoI2cpIi8+PHBhdGggZD0iTTQ0IDY3YzItMTMgMTAtMTkgMTYtMjkgNiAxMCAxNCAxNiAxNiAyOXoiIGZpbGw9InVybCgjZykiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjM0IiByPSI0LjUiIGZpbGw9InVybCgjZykiLz48cGF0aCBkPSJNMzUgMTI4aDUwbC0zIDZIMzh6IiBmaWxsPSIjYTc3ZDM4Ii8+PC9nPjwvc3ZnPgo=" type="image/svg+xml">
@@ -756,6 +773,73 @@ tr.is-current td { background: var(--gold-soft); }
 .takeaway-who svg { width: 16px; height: 16px; }
 .tile-takeaway .tile-no svg { width: 30px; height: 30px; }
 
+/* ───────── ثيم الألوان (الإعدادات) ───────── */
+.theme-panel { margin-bottom: 16px; }
+.pal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; margin: 6px 0 14px; }
+.pal-opt { position: relative; display: grid; justify-items: center; gap: 6px; padding: 12px 8px 10px; border-radius: 16px; background: var(--inset); box-shadow: inset 0 0 0 1px var(--line); font-size: 12.5px; font-weight: 600; color: var(--foam); text-align: center; cursor: pointer; transition: box-shadow .2s, transform .2s; }
+.pal-opt:hover { transform: translateY(-1px); }
+.pal-opt[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--brass), 0 8px 18px -12px rgba(var(--tint), .6); }
+.pal-opt[aria-pressed="true"]::after { content: '✓'; position: absolute; top: 6px; inset-inline-start: 8px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; background: var(--brass); color: var(--on-brass); }
+.pal-sw { position: relative; width: 44px; height: 44px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12); overflow: hidden; }
+.pal-custom input[type="color"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+.pal-custom .pal-sw::before { content: '+'; position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: 20px; font-weight: 700; text-shadow: 0 1px 3px rgba(0, 0, 0, .5); pointer-events: none; }
+.pal-opt small { display: block; font-weight: 500; color: var(--foam-3); }
+.pal-apply { max-width: 520px; }
+
+/* المعاينة: نسخ مصغّرة من المنيو واللوحة بألوان الثيم */
+.pal-preview { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; margin-top: 16px; padding: 16px; border-radius: 20px; background: rgba(var(--tint), .05); }
+.pal-preview figure { margin: 0; display: grid; gap: 8px; justify-items: center; }
+.pal-preview figcaption { font-size: 12px; color: var(--foam-2); }
+.pv-phone { position: relative; width: 178px; height: 330px; padding: 12px 10px; border-radius: 26px; background: var(--harbor); color: var(--foam); box-shadow: 0 16px 30px -18px rgba(0, 0, 0, .55), inset 0 0 0 1px var(--line); display: grid; align-content: start; gap: 8px; overflow: hidden; font-size: 9.5px; }
+.pv-top { display: flex; align-items: center; gap: 6px; }
+.pv-top b { flex: 1; text-align: center; font-size: 11px; color: var(--brass-hi); }
+.pv-back { width: 20px; height: 20px; border-radius: 7px; background: var(--tide); box-shadow: inset 0 0 0 1px var(--line); }
+.pv-chip { padding: 2px 6px; border-radius: 7px; background: var(--tide); font-weight: 700; box-shadow: inset 0 0 0 1px var(--line); }
+.pv-search { padding: 6px 9px; border-radius: 9px; background: var(--tide); color: var(--foam-3); box-shadow: inset 0 0 0 1px var(--line); }
+.pv-phone[data-mode="dark"] .pv-search { background: #fbf8f5; color: #8f7d70; }
+.pv-cats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.pv-cat { border-radius: 10px; background: var(--tide); overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+.pv-cat b { display: block; padding: 4px 6px; font-size: 9px; }
+.pv-img { display: block; height: 42px; background: linear-gradient(135deg, var(--brass), var(--gold)); opacity: .85; }
+.pv-img.i1 { background: linear-gradient(135deg, var(--gold), var(--brass-lo)); }
+.pv-offer { display: grid; gap: 3px; padding: 8px; border-radius: 11px; background: linear-gradient(150deg, var(--offer-a), var(--offer-b)); box-shadow: inset 0 0 0 1px var(--line); }
+.pv-offer b { color: var(--brass-hi); font-size: 10.5px; }
+.pv-offer small { color: var(--foam-2); }
+.pv-btn { justify-self: start; padding: 4px 9px; border-radius: 999px; background: var(--brass); color: var(--on-brass); font-weight: 700; font-size: 9px; }
+.pv-item { display: flex; align-items: center; gap: 7px; padding: 6px; border-radius: 11px; background: var(--tide); box-shadow: inset 0 0 0 1px var(--line); }
+.pv-thumb { width: 26px; height: 26px; border-radius: 8px; background: var(--gold-soft); box-shadow: inset 0 0 0 1px var(--line); }
+.pv-it { flex: 1; display: grid; }
+.pv-it small { color: var(--brass-hi); font-weight: 700; }
+.pv-plus { width: 20px; height: 20px; border-radius: 7px; display: grid; place-items: center; background: var(--brass); color: var(--on-brass); font-weight: 700; }
+.pv-tab { position: absolute; left: 10px; right: 10px; bottom: 10px; display: flex; justify-content: space-around; padding: 9px 6px; border-radius: 14px; background: var(--tide); box-shadow: 0 8px 18px -12px rgba(0, 0, 0, .6), inset 0 0 0 1px var(--line); }
+.pv-phone[data-mode="dark"] .pv-tab { background: #fbf8f5; }
+.pv-tab i { width: 14px; height: 4px; border-radius: 2px; background: var(--foam-3); opacity: .5; }
+.pv-phone[data-mode="dark"] .pv-tab i { background: #7a685d; }
+.pv-tab i.on, .pv-phone[data-mode="dark"] .pv-tab i.on { background: var(--tab-on); opacity: 1; }
+.pv-fab { position: absolute; left: 12px; bottom: 50px; width: 28px; height: 28px; border-radius: 10px; background: var(--fab-bg); box-shadow: 0 8px 14px -8px rgba(0, 0, 0, .7); }
+.pv-wide { flex: 1 1 320px; min-width: 0; }
+.pv-cashier { width: 100%; max-width: 440px; height: 330px; display: grid; grid-template-columns: 1fr 96px; border-radius: 18px; overflow: hidden; background: var(--harbor); color: var(--foam); box-shadow: 0 16px 30px -18px rgba(0, 0, 0, .55), inset 0 0 0 1px var(--line); font-size: 10px; direction: ltr; }
+.pv-cashier > * { direction: rtl; }
+.pv-side { grid-column: 2; grid-row: 1; display: grid; align-content: start; gap: 6px; padding: 12px 8px; background: linear-gradient(180deg, var(--side-a), var(--side-b)); color: var(--side-ink); }
+.pv-side b { font-size: 11px; margin-bottom: 6px; }
+.pv-side i { font-style: normal; padding: 5px 7px; border-radius: 8px; opacity: .85; }
+.pv-side i.on { background: var(--harbor); color: var(--brass-hi); opacity: 1; font-weight: 700; }
+.pv-main { grid-column: 1; grid-row: 1; display: grid; align-content: start; gap: 10px; padding: 12px; }
+.pv-head { display: flex; align-items: center; justify-content: space-between; }
+.pv-head b { font-size: 13px; }
+.pv-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.pv-tiles span { height: 46px; border-radius: 10px; padding: 5px 7px; font-weight: 800; font-size: 13px; color: var(--foam-3); background: var(--tide); box-shadow: inset 0 0 0 1px var(--line); }
+.pv-tiles .t-new { background: linear-gradient(160deg, #f8ead0, #efd8ad); color: #6d4f22; }
+.pv-tiles .t-ready { background: #e2efe5; color: #2f6449; }
+.pv-card { display: grid; gap: 4px; padding: 9px; border-radius: 12px; background: var(--tide); box-shadow: inset 0 0 0 1px var(--line); }
+.pv-card small { color: var(--foam-2); }
+@media (max-width: 560px) { .pv-phone { width: 150px; height: 300px; } }
+
+/* رابط كل طاولة */
+.tcard { position: relative; padding-inline-end: 42px; }
+.tcard .tlink { position: absolute; top: 6px; inset-inline-end: 6px; width: 30px; height: 30px; }
+.tcard .tlink svg { width: 16px; height: 16px; }
+
 </style>
   <style>
 /* ─────────────────────────────────────────────
@@ -937,6 +1021,24 @@ tr.is-current td { background: var(--gold-soft); }
 [data-theme="dark"][data-biz="restaurant"] .tabbar button[aria-current="page"] { color: #a8482a; }
 [data-biz="restaurant"] [data-cafe-only] { display: none !important; }
 
+/* ─────────────────────────────────────────────
+   ثيم الألوان اللي اختاره الكاشير (palette.js بيحط المتغيرات على :root[data-palette])
+   هون بس الأجزاء اللي ألوانها ثابتة بالتصميم الأصلي
+   ───────────────────────────────────────────── */
+:root[data-palette] .side, :root[data-palette][data-theme="dark"] .side { background: linear-gradient(180deg, var(--side-a), var(--side-b)); color: var(--side-ink); }
+:root[data-palette] .side-brand .brand-mark-name { color: var(--side-ink); }
+:root[data-palette] .nav-btn[aria-current="page"] { background: var(--harbor); color: var(--brass-hi); }
+:root[data-palette][data-theme="dark"] .nav-btn[aria-current="page"] { background: color-mix(in srgb, var(--brass) 18%, transparent); color: var(--brass); }
+:root[data-palette] .offer, :root[data-palette][data-theme="dark"] .offer { background: linear-gradient(150deg, var(--offer-a), var(--offer-b)); box-shadow: var(--shadow-card), inset 0 0 0 1px var(--line); }
+:root[data-palette] .offer-arts .art, :root[data-palette][data-theme="dark"] .offer-arts .art { box-shadow: 0 0 0 3px var(--offer-a); }
+:root[data-palette] .fab, :root[data-palette][data-theme="dark"] .fab { background: var(--fab-bg); }
+:root[data-palette] .fab::after, :root[data-palette][data-theme="dark"] .fab::after { box-shadow: 0 0 0 2px var(--fab-bg); }
+:root[data-palette] .btn-brass:hover, :root[data-palette][data-theme="dark"] .btn-brass:hover { background: var(--brass-hi); }
+:root[data-palette] .btn-ghost, :root[data-palette][data-theme="dark"] .btn-ghost { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--brass) 45%, transparent); }
+:root[data-palette][data-theme="dark"] .tabbar button[aria-current="page"] { color: var(--tab-on); }
+:root[data-palette][data-theme="dark"] .tabbar button[aria-current="page"]::before { background: var(--gold); }
+:root[data-palette][data-theme="dark"] .search:focus-within { box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .8), inset 0 0 0 1.5px var(--gold); }
+
 </style>
 </head>
 <body class="admin">
@@ -1037,6 +1139,7 @@ tr.is-current td { background: var(--gold-soft); }
                 <div class="row">
                   <button class="btn btn-ghost btn-sm" id="copyLink" type="button" hidden></button>
                   <button class="btn btn-brass btn-sm" id="printCards" type="button"></button>
+                  <button class="btn btn-ghost btn-sm" id="printTableQrs" type="button">QR لكل طاولة</button>
                 </div>
               </div>
             </div>
@@ -1841,6 +1944,15 @@ route('POST', '/admin/restore', ({ body }) => {
 }, { admin: true });
 route('GET', '/admin/months/:key', ({ p }) => monthReport(p.key), { admin: true });
 route('GET', '/admin/table-insight/:n', ({ p }) => tableInsight(p.n), { admin: true });
+// ثيم الألوان: جاهز (palette) أو لون المحل (custom + color)، وبيتطبّق على المنيو أو اللوحة أو الاثنين
+const PALETTE_IDS = ['default', 'custom', 'terracotta', 'olive', 'purple', 'navy', 'burgundy', 'teal', 'rose', 'blue', 'charcoal'];
+function cleanTheme(t) {
+  const palette = PALETTE_IDS.includes(t?.palette) ? t.palette : 'default';
+  const color = /^#[0-9a-f]{6}$/i.test(String(t?.color ?? '')) ? String(t.color).toLowerCase() : null;
+  if (palette === 'custom' && !color) throw new HttpError(400, 'اختار لون المحل.');
+  const applyTo = ['menu', 'admin', 'both'].includes(t?.applyTo) ? t.applyTo : 'menu';
+  return { palette, color, applyTo };
+}
 route('PUT', '/admin/settings', ({ body: b = {} }) => {
   const s = db().settings;
   if (b.cafeName != null) s.cafeName = str(b.cafeName, 40) || s.cafeName;
@@ -1853,6 +1965,7 @@ route('PUT', '/admin/settings', ({ body: b = {} }) => {
   if (b.hours != null) s.hours = str(b.hours, 100);
   if (b.cafeNotes != null) s.cafeNotes = str(b.cafeNotes, 600);
   if (b.businessType != null) s.businessType = b.businessType === 'restaurant' ? 'restaurant' : 'cafe';
+  if (b.theme != null) s.theme = cleanTheme(b.theme);
   if (b.city != null) s.city = str(b.city, 40);
   if (b.lat != null && b.lat !== '') s.lat = num(b.lat, { min: -90, max: 90 });
   if (b.lon != null && b.lon !== '') s.lon = num(b.lon, { min: -180, max: 180 });
@@ -5022,6 +5135,7 @@ __def("public/js/admin.js", function (__e) {
 'use strict';
 const { $, $$, esc, api, money, moneyText, toast, openSheet, closeSheet, chime, unlockAudio, timeAgo, STATUS, SUGAR, THEMES, themePref, setTheme, TENANT, tenantPath, storeKey, frozenNow, bizWords, applyBusiness } = __req("public/js/common.js");
 const { brandLogo, fitLogo, brandMark, artTile, itemArt, icon, ART_KEYS, ART_LABELS, setBusiness } = __req("public/js/art.js");
+const { PALETTES, APPLY_TO, previewVars, varsToStyle, applyPalette } = __req("public/js/palette.js");
 
 const S = {
   token: null,
@@ -5132,6 +5246,7 @@ function renderShell() {
   const s = S.data.settings;
   setBusiness(s.businessType); // مطعم = قدرة الفخار وألوانه
   applyBusiness(s.businessType);
+  applyPalette(s.theme, 'admin', storeKey('palette.admin')); // ثيم الألوان (إذا مطبّق على اللوحة)
   renderThemeBtn();
   document.title = `لوحة الكاشير — ${s.cafeName}`;
   $('#sideBrand').innerHTML = `${brandMark(s.cafeName)}<small>لوحة الكاشير</small>`;
@@ -5295,7 +5410,7 @@ function orderCard(o, { inKanban = false } = {}) {
         ${next ? `<button class="btn ${o.status === 'new' ? 'btn-brass' : 'btn-ghost'} btn-sm" type="button" data-advance="${o.id}" data-to="${next[0]}">${icon(next[0] === 'served' ? 'check' : next[0] === 'ready' ? 'bell' : 'flame')}${next[1]}</button>` : ''}
         ${OPEN.includes(o.status) ? `<button class="icon-btn" type="button" data-edit-order="${o.id}" aria-label="عدّل الطلب" title="عدّل الطلب (زيد أو شيل أصناف)">${icon('edit')}</button>` : ''}
         <button class="icon-btn" type="button" data-print="${o.id}" aria-label="اطبع تذكرة المطبخ" title="اطبع تذكرة المطبخ">${icon('printer')}</button>
-        ${o.status === 'new' ? `<button class="icon-btn" type="button" data-cancel="${o.id}" aria-label="إلغاء الطلب" title="إلغاء الطلب">${icon('close')}</button>` : ''}
+        ${OPEN.includes(o.status) ? `<button class="icon-btn" type="button" data-cancel="${o.id}" aria-label="إلغاء الطلب" title="إلغاء الطلب">${icon('close')}</button>` : ''}
       </div>
     </article>`;
 }
@@ -5390,6 +5505,15 @@ function openOrderEditor({ order = null, table = null } = {}) {
   openEditor({
     title: order ? `تعديل طلب #${order.no}` : 'طلب جديد',
     saveLabel: order ? 'احفظ التعديل' : 'أرسل الطلب',
+    // طلب موجود: الكاشير بيقدر يلغيه من هون كمان (المخزن بيرجع والزبون بيشوف إنه انلغى)
+    ...(order ? {
+      deleteLabel: 'ألغِ الطلب',
+      onDelete: async () => {
+        const o = await call(`/orders/${order.id}`, { method: 'PATCH', body: { status: 'cancelled' } });
+        applyOrder(o);
+        toast(`انلغى طلب #${o.no}`, 'ok');
+      },
+    } : {}),
     body: `
       ${order ? `<p class="muted">${esc(placeLabel(order))}${order.manualDiscount ? ' · انتبه: الخصم اليدوي على هالطلب بينشال لما تعدّله' : ''}</p>` : `
         ${segmented('oeType', [['table', 'على طاولة'], ['takeaway', 'طلب خارجي (تيك أواي)']], type)}
@@ -5585,11 +5709,11 @@ function askConfirm(message, okLabel = 'تأكيد') {
 
 // ───────── المحرر العام ─────────
 let editorSave = null;
-function openEditor({ title, body, onSave, onDelete, saveLabel = 'حفظ' }) {
+function openEditor({ title, body, onSave, onDelete, saveLabel = 'حفظ', deleteLabel = 'حذف' }) {
   $('#editorTitle').textContent = title;
   $('#editorForm').innerHTML = body + '<p class="form-err" id="formErr" role="alert"></p>';
   $('#editorFoot').innerHTML = `
-    ${onDelete ? `<button class="btn btn-quiet btn-danger" type="button" id="editorDelete">${icon('trash')}حذف</button>` : ''}
+    ${onDelete ? `<button class="btn btn-quiet btn-danger" type="button" id="editorDelete">${icon('trash')}${deleteLabel}</button>` : ''}
     <button class="btn btn-brass" type="button" id="editorSave">${icon('check')}${saveLabel}</button>`;
   editorSave = async () => {
     const btn = $('#editorSave');
@@ -5601,7 +5725,7 @@ function openEditor({ title, body, onSave, onDelete, saveLabel = 'حفظ' }) {
     let armed = false;
     $('#editorDelete').onclick = async () => {
       const b = $('#editorDelete');
-      if (!armed) { armed = true; b.classList.add('is-armed'); b.innerHTML = `${icon('trash')}متأكد؟ اضغط كمان مرة`; setTimeout(() => { armed = false; if (b.isConnected) { b.classList.remove('is-armed'); b.innerHTML = `${icon('trash')}حذف`; } }, 4000); return; }
+      if (!armed) { armed = true; b.classList.add('is-armed'); b.innerHTML = `${icon('trash')}متأكد؟ اضغط كمان مرة`; setTimeout(() => { armed = false; if (b.isConnected) { b.classList.remove('is-armed'); b.innerHTML = `${icon('trash')}${deleteLabel}`; } }, 4000); return; }
       try { await onDelete(); closeSheet($('#editor')); } catch (err) { $('#formErr').textContent = err.message; }
     };
   }
@@ -5915,8 +6039,26 @@ function renderTablesView() {
   $('#tableGrid').innerHTML = tables.map((t) => `
     <div class="tcard">
       <span class="num">${t.number}</span>
+      <button class="icon-btn tlink" type="button" data-tlink="${t.number}" aria-label="انسخ رابط طاولة ${t.number}" title="رابط هالطاولة (الزبون بيفتحه وطاولته جاهزة)">${icon('qr')}</button>
       <select class="select" data-tzone="${t.number}" aria-label="منطقة طاولة ${t.number}">${zones.map((z) => `<option value="${esc(z.id)}" ${z.id === t.zoneId ? 'selected' : ''}>${esc(z.name)}</option>`).join('')}</select>
     </div>`).join('');
+}
+/** رابط طاولة معيّنة: الزبون بيمسحه وبتنحط طاولته لحالها */
+function tableLink(n) {
+  const u = new URL(qrTarget(), location.href);
+  u.searchParams.set('table', n);
+  return u.href;
+}
+function printTableQrs() {
+  const s = S.data.settings;
+  $('#printArea').innerHTML = `<div class="cards">${S.data.tables.map((t) => `
+    <div class="tent">
+      ${brandMark(s.cafeName)}
+      <p class="tno">طاولة ${t.number}</p>
+      <div class="qr">${qrSvg(tableLink(t.number))}</div>
+      <p><b>امسح الكود واطلب من طاولتك</b></p>
+    </div>`).join('')}</div>`;
+  window.print();
 }
 function printTableCards() {
   const s = S.data.settings;
@@ -6358,7 +6500,14 @@ function renderSettings() {
     : ai.standalone
       ? 'الوضع الأساسي: بيفهم الطلبات الشائعة. حط مفتاح Gemini المجاني تحت، وبيصير نديم يحكي ويتناقش مع الزباين بذكاء.'
       : 'الوضع الأساسي: بيفهم الطلبات الشائعة. لتفعيل المحادثة الكاملة حط GEMINI_API_KEY (مجاني) أو ANTHROPIC_API_KEY بملف .env وأعد تشغيل السيرفر.';
+  S.themeDraft ??= { palette: 'default', applyTo: 'menu', ...(s.theme ?? {}), color: s.theme?.color || '#6b3fa0' };
   $('#settings').innerHTML = `
+    <section class="panel theme-panel">
+      <div class="panel-head"><h2>ثيم الألوان</h2></div>
+      <p class="muted">اختار ألوان بتناسب هوية محلك (أو حط لون محلك نفسه)، وقرّر وين تطبّقها. المعاينة تحت بتتغيّر قبل ما تحفظ.</p>
+      <div id="palPicker"></div>
+      <div class="pal-preview" id="palPreview"></div>
+    </section>
     <div class="settings-grid">
       <section class="panel">
         <div class="panel-head"><h2>الهوية</h2></div>
@@ -6434,9 +6583,89 @@ function renderSettings() {
     fitLogo($('#logoPreview svg'));
   };
   drawLogo();
+  renderPalPicker();
   let t;
-  $('#settings').oninput = (e) => { if (['s_name', 's_word'].includes(e.target.id)) { clearTimeout(t); t = setTimeout(drawLogo, 250); } };
+  $('#settings').oninput = (e) => {
+    if (['s_name', 's_word'].includes(e.target.id)) { clearTimeout(t); t = setTimeout(() => { drawLogo(); renderPalPreview(); }, 250); }
+    if (e.target.id === 'palColor') { S.themeDraft.palette = 'custom'; S.themeDraft.color = e.target.value; syncPalPicker(); }
+  };
 }
+// ───────── ثيم الألوان: الاختيارات والمعاينة ─────────
+function renderPalPicker() {
+  const th = S.themeDraft;
+  const biz = S.bizDraft ?? S.data.settings.businessType ?? 'cafe';
+  const swatch = (theme) => {
+    const v = previewVars(theme, 'light', biz);
+    return `<span class="pal-sw" style="background:linear-gradient(135deg, ${v['--brass']} 0 50%, ${v['--gold']} 50% 70%, ${v['--harbor']} 70%)"></span>`;
+  };
+  const opt = (id, name) => `<button type="button" class="pal-opt" data-pal="${id}" aria-pressed="${th.palette === id}">${swatch({ palette: id })}<span>${name}</span></button>`;
+  $('#palPicker').innerHTML = `
+    <div class="pal-grid" role="group" aria-label="ثيمات الألوان">
+      ${opt('default', biz === 'restaurant' ? 'هوية المطعم الأصلية' : 'هوية الكافيه الأصلية')}
+      ${PALETTES.map((p) => opt(p.id, p.name)).join('')}
+      <label class="pal-opt pal-custom" aria-pressed="${th.palette === 'custom'}">
+        <span class="pal-sw" style="background:${esc(th.color || '#6b3fa0')}"><input type="color" id="palColor" value="${esc(th.color || '#6b3fa0')}" aria-label="لون محلك"></span>
+        <span>لون محلك <small class="pal-cv" dir="ltr">${th.palette === 'custom' ? esc(th.color) : ''}</small></span>
+      </label>
+    </div>
+    <div class="field pal-apply">
+      <span>طبّق الثيم على</span>
+      <div class="segmented" style="--n:3" role="radiogroup" aria-label="وين ينطبق الثيم">${APPLY_TO.map(([k, label]) => `<button type="button" role="radio" data-apply-to="${k}" aria-pressed="${th.applyTo === k}" aria-checked="${th.applyTo === k}">${label}</button>`).join('')}</div>
+    </div>`;
+  renderPalPreview();
+}
+/** تحديث الاختيار بدون ما نعيد رسم الأزرار (عشان نافذة اختيار اللون تضل مفتوحة) */
+function syncPalPicker() {
+  const th = S.themeDraft;
+  $$('#palPicker [data-pal]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pal === th.palette)));
+  const c = $('#palPicker .pal-custom');
+  if (c) {
+    c.setAttribute('aria-pressed', String(th.palette === 'custom'));
+    c.querySelector('.pal-sw').style.background = th.color;
+    c.querySelector('.pal-cv').textContent = th.palette === 'custom' ? th.color : '';
+  }
+  $$('#palPicker [data-apply-to]').forEach((b) => { const on = b.dataset.applyTo === th.applyTo; b.setAttribute('aria-pressed', on); b.setAttribute('aria-checked', on); });
+  renderPalPreview();
+}
+function renderPalPreview() {
+  const el = $('#palPreview');
+  if (!el) return;
+  const th = S.themeDraft;
+  const s = S.data.settings;
+  const biz = S.bizDraft ?? s.businessType ?? 'cafe';
+  const menuTheme = ['menu', 'both'].includes(th.applyTo) ? th : null;
+  const adminTheme = ['admin', 'both'].includes(th.applyTo) ? th : null;
+  const name = esc(val('s_name') || s.cafeName);
+  const cats = S.data.categories.slice(0, 2).map((c) => esc(c.name));
+  const items = S.data.items.filter((i) => i.available !== false).slice(0, 2);
+  const item = items[0] ? esc(items[0].name) : 'صنف';
+  const price = items[0] ? moneyText(itemUnitPrice(items[0]), cur()) : '';
+  const phone = (mode) => `
+    <div class="pv-phone" data-mode="${mode}" style="${varsToStyle(previewVars(menuTheme, mode, biz))}">
+      <div class="pv-top"><span class="pv-back"></span><b>${name}</b><span class="pv-chip">05</span></div>
+      <div class="pv-search">ابحث في المنيو…</div>
+      <div class="pv-cats">${cats.map((c, i) => `<div class="pv-cat"><span class="pv-img i${i}"></span><b>${c}</b></div>`).join('')}</div>
+      <div class="pv-offer"><b>عرض اليوم</b><small>${item}${items[1] ? ` مع ${esc(items[1].name)}` : ''}</small><span class="pv-btn">أضف العرض</span></div>
+      <div class="pv-item"><span class="pv-thumb"></span><span class="pv-it"><b>${item}</b><small>${price}</small></span><span class="pv-plus">+</span></div>
+      <div class="pv-tab"><i class="on"></i><i></i><i></i><i></i></div>
+      <span class="pv-fab"></span>
+    </div>`;
+  el.innerHTML = `
+    <figure>${phone('light')}<figcaption>المنيو · فاتح${menuTheme ? '' : ' (بدون الثيم)'}</figcaption></figure>
+    <figure>${phone('dark')}<figcaption>المنيو · غامق${menuTheme ? '' : ' (بدون الثيم)'}</figcaption></figure>
+    <figure class="pv-wide">
+      <div class="pv-cashier" style="${varsToStyle(previewVars(adminTheme, 'light', biz))}">
+        <div class="pv-side"><b>${name}</b><i class="on">الصالة</i><i>الطلبات</i><i>القائمة</i><i>الإعدادات</i></div>
+        <div class="pv-main">
+          <div class="pv-head"><b>الصالة</b><span class="pv-btn">+ طلب جديد</span></div>
+          <div class="pv-tiles"><span class="t-new">1</span><span>2</span><span class="t-ready">3</span><span>4</span><span>5</span><span>6</span></div>
+          <div class="pv-card"><b>طلب #12 · طاولة 1</b><small>${item} ×2</small><span class="pv-btn">ابدأ التحضير</span></div>
+        </div>
+      </div>
+      <figcaption>لوحة الكاشير${adminTheme ? '' : ' (بدون الثيم)'}</figcaption>
+    </figure>`;
+}
+
 async function downloadBackup() {
   try {
     const data = await call('/backup');
@@ -6490,9 +6719,11 @@ async function saveSettings() {
       currency: val('s_cur'), city: val('s_city'), lat: val('s_lat'), lon: val('s_lon'), adminPin: val('s_pin'),
       wifi: val('s_wifi'), hours: val('s_hours'), cafeNotes: val('s_notes'),
       businessType: S.bizDraft ?? S.data.settings.businessType ?? 'cafe',
+      theme: S.themeDraft,
     };
     S.data.settings = await call('/settings', { method: 'PUT', body });
     S.bizDraft = null;
+    S.themeDraft = null;
     renderShell();
     toast('انحفظت الإعدادات', 'ok');
     renderSettings();
@@ -6507,6 +6738,7 @@ function bind() {
     const mrow = e.target.closest('tr[data-month-row]');
     if (mrow) { S.month = mrow.dataset.monthRow; await renderReports(); return $('.month-head')?.scrollIntoView({ behavior: 'smooth' }); }
     if (relay && e.target.closest('#live')) return setView('tables');
+    if (e.target.closest('.pal-custom') && S.themeDraft) { S.themeDraft.palette = 'custom'; syncPalPicker(); } // ونافذة اللون بتنفتح لحالها
     const t = e.target.closest('button, [data-table], a');
     if (!t) return;
     const d = t.dataset;
@@ -6585,6 +6817,21 @@ function bind() {
       return;
     }
     if (t.id === 'printCards') return printTableCards();
+    if (t.id === 'printTableQrs') return printTableQrs();
+    if (d.tlink) {
+      const link = tableLink(d.tlink);
+      try { await navigator.clipboard.writeText(link); toast(`انسخ رابط طاولة ${d.tlink} ✓`, 'ok'); } catch { toast(link); }
+      return;
+    }
+    // ── ثيم الألوان: اختيار ومعاينة، والحفظ بزر "احفظ الإعدادات" ──
+    if (d.pal) {
+      S.themeDraft.palette = d.pal;
+      return syncPalPicker();
+    }
+    if (d.applyTo) {
+      S.themeDraft.applyTo = d.applyTo;
+      return syncPalPicker();
+    }
     if (d.newOrder !== undefined) { e.stopPropagation(); return openOrderEditor({ table: d.forTable != null ? Number(d.forTable) : null }); }
     if (d.editOrder) { e.stopPropagation(); const o = S.orders.find((x) => x.id === d.editOrder); return o && openOrderEditor({ order: o }); }
     if (t.id === 'copyLink') return copyCustomerLink();
@@ -6614,6 +6861,7 @@ function bind() {
       $$('[data-biz-set]').forEach((b) => { const on = b === t; b.setAttribute('aria-pressed', on); b.setAttribute('aria-checked', on); });
       setBusiness(S.bizDraft); applyBusiness(S.bizDraft);
       $('#loadTemplate').innerHTML = `${icon('download')}حمّل قائمة ${S.bizDraft === 'restaurant' ? 'المطعم' : 'الكافيه'} الجاهزة`;
+      renderPalPicker();
       $('#s_barista').closest('.field').querySelector('span').textContent = `اسم ${bizWords(S.bizDraft).hostSmart}`;
       $('#settings').dispatchEvent(new Event('input'));
       const word = val('s_word') || S.data.settings.brandWord;
@@ -6993,7 +7241,9 @@ function bizWords(type) {
 }
 /** بيحط نوع المحل على الصفحة (ألوان وهوية المطعم بـ theme.css) */
 function applyBusiness(type) {
-  document.documentElement.dataset.biz = type === 'restaurant' ? 'restaurant' : 'cafe';
+  const biz = type === 'restaurant' ? 'restaurant' : 'cafe';
+  document.documentElement.dataset.biz = biz;
+  try { localStorage.setItem(storeKey('biz'), biz); } catch { /* */ } // للزيارة الجاية (سكربت الرأس)
 }
 
 const STATUS = {
@@ -7333,6 +7583,199 @@ function weatherIcon(w) {
 }
 
 Object.assign(__e, { dallahShape, setBusiness, isRestaurant, potShape, ladleShape, dallahIcon, brandLogo, fitLogo, brandMark, ART_KEYS, ART_LABELS, itemArt, artTile, icon, leavesArt, weatherIcon });
+});
+
+__def("public/js/palette.js", function (__e) {
+'use strict';
+// ثيمات الألوان: الكاشير بيختار ثيم (أو لون محله) من الإعدادات، وبيطبّقه على المنيو أو لوحته أو الاثنين.
+// من لون واحد بنولّد كل ألوان الواجهة بالفاتح والغامق، مع فحص الوضوح (تباين النص WCAG).
+
+// ───────── الثيمات الجاهزة ─────────
+const PALETTES = [
+  { id: 'terracotta', name: 'تيراكوتا', color: '#c46a3d' },
+  { id: 'olive', name: 'زيتوني', color: '#5f6b3a' },
+  { id: 'purple', name: 'بنفسجي', color: '#6b3fa0' },
+  { id: 'navy', name: 'كحلي', color: '#1f3a5f' },
+  { id: 'burgundy', name: 'عنّابي', color: '#8e2f4f' },
+  { id: 'teal', name: 'فيروزي', color: '#1f7a73' },
+  { id: 'rose', name: 'وردي', color: '#b4537a' },
+  { id: 'blue', name: 'أزرق', color: '#2f6fb0' },
+  { id: 'charcoal', name: 'فحمي وذهبي', color: '#2b2b2b', accent: '#c9a24d' },
+];
+const APPLY_TO = [['menu', 'المنيو (الزباين)'], ['admin', 'لوحة الكاشير'], ['both', 'الاثنين']];
+
+// ───────── رياضيات الألوان ─────────
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+function hexToRgb(hex) {
+  const h = String(hex).replace('#', '');
+  const n = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+const toHex = (r, g, b) => '#' + [r, g, b].map((v) => Math.round(clamp(v, 0, 255)).toString(16).padStart(2, '0')).join('');
+function rgbToHsl([r, g, b]) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, s, l];
+}
+function hsl(h, s, l) {
+  h = ((h % 360) + 360) % 360; s = clamp(s, 0, 1); l = clamp(l, 0, 1);
+  const k = (n) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return toHex(f(0) * 255, f(8) * 255, f(4) * 255);
+}
+const lum = (hex) => {
+  const c = hexToRgb(hex).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+};
+const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+const rgbList = (hex) => hexToRgb(hex).join(', ');
+
+/** بنغمّق (أو بنفتّح) اللون لحد ما يصير مقروء على الخلفية المطلوبة */
+function fit(h, s, l, against, min, dir) {
+  let c = hsl(h, s, l);
+  for (let i = 0; i < 60 && contrast(c, against) < min; i++) { l += dir * 0.015; c = hsl(h, s, l); }
+  return c;
+}
+
+/** كل متغيرات الواجهة من لون واحد: { light: {...}, dark: {...} } */
+function paletteFrom(color, accent = null) {
+  const [h0, s0, l0] = rgbToHsl(hexToRgb(color));
+  const grey = s0 < 0.1; // لون رمادي/أسود: الخلفيات بتاخد لون اللمسة (الذهبي مثلاً)
+  const [ha, sa] = accent ? rgbToHsl(hexToRgb(accent)) : [h0, s0];
+  const h = grey ? ha : h0;
+  const st = grey ? Math.min(sa, 0.35) * 0.5 : Math.min(s0, 0.6); // تشبّع الخلفيات (هادي)
+
+  // ── الفاتح ──
+  const harbor = hsl(h, st * 0.45, 0.95);
+  const foam = hsl(h, st * 0.55, 0.12);
+  const brass = fit(h0, s0, Math.min(l0, 0.5), '#ffffff', 4.8, -1);
+  const [bh, bs, bl] = rgbToHsl(hexToRgb(brass));
+  const light = {
+    '--abyss': hsl(h, st * 0.45, 0.89),
+    '--harbor': harbor,
+    '--tide': '#ffffff',
+    '--swell': '#ffffff',
+    '--tint': rgbList(foam),
+    '--line': hsl(h, st * 0.3, 0.88),
+    '--line-strong': hsl(h, st * 0.3, 0.8),
+    '--inset': hsl(h, st * 0.3, 0.975),
+    '--foam': foam,
+    '--foam-2': fit(h, st * 0.3, 0.42, harbor, 4.8, -1),
+    '--foam-3': hsl(h, st * 0.25, 0.55),
+    '--brass': brass,
+    '--brass-hi': fit(bh, bs, bl - 0.08, harbor, 6, -1),
+    '--brass-lo': hsl(bh, bs * 0.45, 0.72),
+    '--olive-soft': hsl(h, st * 0.5, 0.91),
+    '--gold': accent ?? hsl(h0, Math.max(s0, 0.35), clamp(l0 + 0.2, 0.5, 0.62)),
+    '--gold-soft': hsl(grey ? ha : h0, (grey ? sa : s0) * 0.5, 0.92),
+    '--on-brass': '#ffffff',
+    '--side-a': hsl(bh, bs * 0.85, clamp(bl * 0.9, 0.18, 0.3)),
+    '--side-b': hsl(bh, bs * 0.85, clamp(bl * 0.55, 0.1, 0.18)),
+    '--side-ink': hsl(h, st * 0.5, 0.92),
+    '--offer-a': hsl(h, st * 0.55, 0.94),
+    '--offer-b': hsl(h, st * 0.55, 0.88),
+    '--fab-bg': brass,
+    '--tab-on': brass,
+  };
+
+  // ── الغامق ──
+  const dHarbor = hsl(h, st * 0.5, 0.07);
+  const dBrassBase = grey && accent ? accent : color;
+  const [dh, ds, dl] = rgbToHsl(hexToRgb(dBrassBase));
+  const dSat = grey && !accent ? 0 : Math.max(ds, 0.35); // رمادي بدون لمسة: بيضل رمادي
+  const dBrass = fit(dh, dSat, Math.max(dl, 0.5), dHarbor, 6, 1);
+  const dFoam = hsl(h, st * 0.3, 0.93);
+  const dark = {
+    '--abyss': hsl(h, st * 0.5, 0.04),
+    '--harbor': dHarbor,
+    '--tide': hsl(h, st * 0.45, 0.11),
+    '--swell': hsl(h, st * 0.45, 0.14),
+    '--tint': rgbList(dFoam),
+    '--line': hsl(h, st * 0.35, 0.18),
+    '--line-strong': hsl(h, st * 0.35, 0.24),
+    '--inset': hsl(h, st * 0.45, 0.09),
+    '--foam': dFoam,
+    '--foam-2': fit(h, st * 0.2, 0.66, hsl(h, st * 0.45, 0.11), 5, 1),
+    '--foam-3': hsl(h, st * 0.18, 0.55),
+    '--brass': dBrass,
+    '--brass-hi': fit(dh, dSat, rgbToHsl(hexToRgb(dBrass))[2] + 0.07, dHarbor, 7, 1),
+    '--brass-lo': hsl(dh, ds * 0.45, 0.35),
+    '--olive-soft': hsl(h, st * 0.45, 0.14),
+    '--gold': accent ?? dBrass,
+    '--gold-soft': hsl(h, st * 0.6, 0.16),
+    '--on-brass': dHarbor,
+    '--side-a': hsl(h, st * 0.6, 0.12),
+    '--side-b': hsl(h, st * 0.6, 0.07),
+    '--side-ink': dFoam,
+    '--offer-a': hsl(h, st * 0.55, 0.14),
+    '--offer-b': hsl(h, st * 0.55, 0.1),
+    '--fab-bg': hsl(dh, dSat * 0.7, 0.2),
+    '--tab-on': brass, // الشريط السفلي أبيض بالغامق، فالأيقونة المختارة بلون الفاتح
+  };
+  return { light, dark };
+}
+
+// ───────── الهوية الأصلية (بدون ثيم): للمعاينة بس، القيم الحقيقية بـ base.css و theme.css ─────────
+const BASE = {
+  cafe: {
+    light: { '--harbor': '#f4ece1', '--abyss': '#e9dfd1', '--tide': '#ffffff', '--swell': '#ffffff', '--line': '#e8e1d9', '--inset': '#fbf8f5', '--foam': '#2b1a12', '--foam-2': '#7a685d', '--foam-3': '#8f7d70', '--brass': '#4a2c1d', '--brass-hi': '#3a2216', '--gold': '#d4a359', '--gold-soft': '#f6ead4', '--olive-soft': '#efe5d8', '--on-brass': '#fbf8f5', '--side-a': '#4a2c1d', '--side-b': '#2b1a12', '--side-ink': '#f1e4cc', '--offer-a': '#f3ead9', '--offer-b': '#ece0c9', '--fab-bg': '#4a2c1d', '--tab-on': '#4a2c1d' },
+    dark: { '--harbor': '#160d08', '--abyss': '#0d0704', '--tide': '#251710', '--swell': '#2f1e15', '--line': '#38251b', '--inset': '#1d120c', '--foam': '#f5ece5', '--foam-2': '#a8988d', '--foam-3': '#8a7a6f', '--brass': '#e8a852', '--brass-hi': '#e8a852', '--gold': '#d4a359', '--gold-soft': '#3a2616', '--olive-soft': '#2a1a12', '--on-brass': '#160d08', '--side-a': '#2a1a12', '--side-b': '#1a0f0a', '--side-ink': '#f5ece5', '--offer-a': '#2c1b12', '--offer-b': '#22150e', '--fab-bg': '#3a2417', '--tab-on': '#4a2c1d' },
+  },
+  restaurant: {
+    light: { '--harbor': '#f6efe6', '--abyss': '#ebe0d2', '--tide': '#ffffff', '--swell': '#ffffff', '--line': '#eadfd2', '--inset': '#fbf6f0', '--foam': '#2a1c14', '--foam-2': '#75645a', '--foam-3': '#8e7c70', '--brass': '#a8482a', '--brass-hi': '#7a3018', '--gold': '#d9952e', '--gold-soft': '#f7e7cf', '--olive-soft': '#efe3d3', '--on-brass': '#fff8f1', '--side-a': '#8a3a20', '--side-b': '#4a1d0e', '--side-ink': '#f6ede4', '--offer-a': '#fbeee2', '--offer-b': '#f3e0cd', '--fab-bg': '#a8482a', '--tab-on': '#a8482a' },
+    dark: { '--harbor': '#140e0b', '--abyss': '#0d0907', '--tide': '#221813', '--swell': '#2c1f18', '--line': '#3a2a21', '--inset': '#1a120e', '--foam': '#f6ede4', '--foam-2': '#b09e92', '--foam-3': '#8d7b6f', '--brass': '#e0784e', '--brass-hi': '#f0936a', '--gold': '#e0a443', '--gold-soft': '#3a2416', '--olive-soft': '#2a1d16', '--on-brass': '#140e0b', '--side-a': '#2c1b14', '--side-b': '#1a100c', '--side-ink': '#f6ede4', '--offer-a': '#2c1d15', '--offer-b': '#21160f', '--fab-bg': '#3a2016', '--tab-on': '#a8482a' },
+  },
+};
+
+/** الثيم المحفوظ بإعدادات المحل → لون أساسي (أو null = الهوية الأصلية) */
+function themeColors(theme) {
+  if (!theme || !theme.palette || theme.palette === 'default') return null;
+  if (theme.palette === 'custom') return /^#[0-9a-f]{6}$/i.test(theme.color ?? '') ? { color: theme.color, accent: null } : null;
+  const p = PALETTES.find((x) => x.id === theme.palette);
+  return p ? { color: p.color, accent: p.accent ?? null } : null;
+}
+/** متغيرات المعاينة لثيم معيّن ووضع معيّن (فاتح/غامق) */
+function previewVars(theme, mode, biz = 'cafe') {
+  const c = themeColors(theme);
+  if (!c) return BASE[biz === 'restaurant' ? 'restaurant' : 'cafe'][mode];
+  return paletteFrom(c.color, c.accent)[mode];
+}
+const varsToStyle = (vars) => Object.entries(vars).map(([k, v]) => `${k}:${v}`).join(';');
+
+/** CSS الثيم للصفحة كلها (بالفاتح والغامق). :root:root عشان يغلب ألوان المطعم الأصلية */
+function paletteCss(theme) {
+  const c = themeColors(theme);
+  if (!c) return '';
+  const { light, dark } = paletteFrom(c.color, c.accent);
+  return `:root:root[data-palette]{${varsToStyle(light)}}:root:root[data-palette][data-theme="dark"]{${varsToStyle(dark)}}`;
+}
+
+/**
+ * بيطبّق ثيم المحل على هالصفحة (page = 'menu' للزبون أو 'admin' للكاشير) إذا الكاشير اختار يطبّقه عليها.
+ * وبيحفظه بالمتصفح عشان المرة الجاية يطلع من أول لحظة (بدون وميض الألوان القديمة).
+ */
+function applyPalette(theme, page, cacheKey = null) {
+  const on = Boolean(themeColors(theme)) && ['both', page].includes(theme.applyTo ?? 'menu');
+  const css = on ? paletteCss(theme) : '';
+  let el = document.getElementById('cfPalette');
+  if (css) {
+    if (!el) { el = document.createElement('style'); el.id = 'cfPalette'; document.head.append(el); }
+    el.textContent = css;
+    document.documentElement.dataset.palette = theme.palette;
+  } else {
+    el?.remove();
+    delete document.documentElement.dataset.palette;
+  }
+  if (cacheKey) { try { if (css) localStorage.setItem(cacheKey, css); else localStorage.removeItem(cacheKey); } catch { /* */ } }
+}
+
+Object.assign(__e, { PALETTES, APPLY_TO, hexToRgb, hsl, contrast, paletteFrom, themeColors, previewVars, varsToStyle, paletteCss, applyPalette });
 });
 
 __req("standalone/runtime.js");
