@@ -1229,7 +1229,7 @@ const { reloadFromStorage, dbKey, setTenant, DEFAULT_TENANT } = __req("standalon
 const { readRegistry, REG_KEY } = __req("standalone/demo-registry.js");
 const { createHost, createClient, randomId, cleanCode, siteCode } = __req("standalone/relay.js");
 
-// تجربة CoffeeFlow: ?store=1002 بيفتح محل ثاني من نفس الموقع (1001 = المحل الأصلي بدون باراميتر)
+// تجربة CafeFlow: ?store=1002 بيفتح محل ثاني من نفس الموقع (1001 = المحل الأصلي بدون باراميتر)
 const STORE = (() => {
   const s = String(new URLSearchParams(location.search).get('store') ?? '').replace(/\D/g, '').slice(0, 8);
   return s && s !== DEFAULT_TENANT ? s : null;
@@ -1502,7 +1502,7 @@ function showBlocked(kind) {
   const [title, msg] = kind === 'missing'
     ? ['ما في محل بهالرقم', 'تأكد من الرابط أو الـ QR، أو ارجع للوحة المنصة.']
     : admin
-      ? ['الحساب مجمّد', 'حساب المحل مجمّد مؤقتاً من إدارة CoffeeFlow، وكل بياناتك محفوظة. تواصل معنا عشان نرجّعه.']
+      ? ['الحساب مجمّد', 'حساب المحل مجمّد مؤقتاً من إدارة CafeFlow، وكل بياناتك محفوظة. تواصل معنا عشان نرجّعه.']
       : ['المحل مش متاح هلأ', 'الطلب من الطاولة متوقف مؤقتاً. اطلب من الكاشير مباشرة، وشكراً لصبرك 🙏'];
   const hide = document.createElement('style');
   hide.textContent = 'body{display:none!important}';
@@ -1514,7 +1514,7 @@ function showBlocked(kind) {
     <span style="width:76px;height:76px;display:grid;place-items:center;border-radius:50%;background:#dfeaf3;color:#2c5a7a"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/><path d="M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/></svg></span>
     <h1 style="margin:4px 0 0;font-size:24px;font-weight:800">${title}</h1>
     <p style="margin:0;color:#566874;line-height:1.7;max-width:32ch">${msg}</p>
-    <span style="margin-top:6px;font-size:12.5px;color:#566874;direction:ltr">Coffee<b style="color:#1d2b36">Flow</b></span></div>`;
+    <span style="margin-top:6px;font-size:12.5px;color:#566874;direction:ltr">Cafe<b style="color:#1d2b36">Flow</b></span></div>`;
   document.documentElement.append(box);
 }
 function checkBlocked() {
@@ -2071,14 +2071,14 @@ Object.assign(__e, { HttpError, randomToken, dropSessions, registerToken, validT
 __def("standalone/db-browser.js", function (__e) {
 'use strict';
 // نسخة المتصفح من مخزن البيانات: نفس واجهة server/db.js لكن على localStorage
-// تجربة CoffeeFlow بالموقع: كل محل إله مفتاح لحاله (1001 = نفس بيانات نسخة المحل الواحد القديمة)
+// تجربة CafeFlow بالموقع: كل محل إله مفتاح لحاله (1001 = نفس بيانات نسخة المحل الواحد القديمة)
 const { buildSeed, migrate } = __req("server/seed.js");
 const { DB_KEY, readRegistry } = __req("standalone/demo-registry.js");
 
 
 const DEFAULT_TENANT = '1001';
 const norm = (id) => (id == null || id === '' || id === 'local' ? DEFAULT_TENANT : String(id));
-const keyOf = (id) => (norm(id) === DEFAULT_TENANT ? DB_KEY : `coffeeflow-demo-db-${norm(id)}`);
+const keyOf = (id) => (norm(id) === DEFAULT_TENANT ? DB_KEY : `cafeflow-demo-db-${norm(id)}`);
 
 let current = DEFAULT_TENANT; // صفحة المحل بتثبّته من الرابط (?store=)
 const states = new Map();
@@ -2947,14 +2947,14 @@ Object.assign(__e, { R_CATEGORIES, R_ITEMS, R_RECIPES, R_COSTS, R_IMAGES, R_CATE
 
 __def("standalone/demo-registry.js", function (__e) {
 'use strict';
-// نسخة الموقع الثابت (تجربة CoffeeFlow بدون سيرفر): سجل المنصة بمتصفح الزائر
+// نسخة الموقع الثابت (تجربة CafeFlow بدون سيرفر): سجل المنصة بمتصفح الزائر
 // نفس دوال server/platform-store.js، بس التخزين localStorage وكل زائر إله نسخته لحاله.
 // أول مرة: حساب تجربة جاهز ومحلّين (كافيه 1001 ومطعم 1002) عشان أي حد يجرّب على طول.
 
 const DB_KEY = 'cafe-mohammad-demo-db';          // بيانات المحل الأول (نفس نسخة المحل الواحد القديمة)
-const REG_KEY = 'coffeeflow-demo-platform';      // سجل المنصة
+const REG_KEY = 'cafeflow-demo-platform';      // سجل المنصة
 const DEMO = true;
-const DEMO_LOGIN = { username: 'demo', password: 'coffeeflow' };
+const DEMO_LOGIN = { username: 'demo', password: 'cafeflow' };
 
 const getItem = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
 
@@ -6363,7 +6363,7 @@ function moneyText(n, cur = '₪') {
   return `${Number.isInteger(v) ? v : v.toFixed(1)}${cur}`;
 }
 
-// CoffeeFlow: كل محل إله مسار (/1001) و API خاص (/api/t/1001)، وتخزين خاص بالجهاز
+// CafeFlow: كل محل إله مسار (/1001) و API خاص (/api/t/1001)، وتخزين خاص بالجهاز
 const TENANT = (location.pathname.match(/^\/(\d{3,8})(?:\/|$)/) || [])[1] ?? demoStore();
 /** نسخة التجربة على الموقع الثابت: customer.html?store=1002 (المحل 1001 هو الأصلي بدون رقم) */
 function demoStore() {

@@ -12,7 +12,7 @@
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
     } catch (e) { /* */ }
   </script>
-  <title>CoffeeFlow — لوحة المنصة</title>
+  <title>CafeFlow — لوحة المنصة</title>
   <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTYiIGZpbGw9IiM0YTJjMWQiLz48cGF0aCBkPSJNMTcgMjdoMjV2OWExMi41IDEyLjUgMCAwIDEtMjUgMHoiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Q0YTM1OSIgc3Ryb2tlLXdpZHRoPSIzLjQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNNDIgMzBoMy41YTUgNSAwIDAgMSAwIDEwSDQxIiBmaWxsPSJub25lIiBzdHJva2U9IiNkNGEzNTkiIHN0cm9rZS13aWR0aD0iMy4yIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMjMgMjFjMC00IDQtNCA0LThNMzAgMjFjMC00IDQtNCA0LTgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Y2ZWFkNCIgc3Ryb2tlLXdpZHRoPSIyLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xMyA1MmM2LTMuNSAxMiAzLjUgMTggMHMxMi0zLjUgMTggMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZDRhMzU5IiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPgo=" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -307,7 +307,7 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 </style>
   <style>
 /* ─────────────────────────────────────────────
-   CoffeeFlow — لوحة المنصة (نفس ألوان المنتج: بيج + بني + ذهبي)
+   CafeFlow — لوحة المنصة (نفس ألوان المنتج: بيج + بني + ذهبي)
    ───────────────────────────────────────────── */
 :root { --pf-mark: #4a2c1d; }
 body.pf { background: var(--harbor); min-height: 100dvh; }
@@ -648,7 +648,7 @@ body.pf { background: var(--harbor); min-height: 100dvh; }
     <div class="pf-auth-card">
       <div class="pf-logo" data-logo></div>
       <h1 id="authTitle">دخول المنصة</h1>
-      <p class="muted" id="authSub">لوحة تحكم المحلات المشتركة بـ CoffeeFlow</p>
+      <p class="muted" id="authSub">لوحة تحكم المحلات المشتركة بـ CafeFlow</p>
       <form id="authForm" class="stack" novalidate>
         <label class="field" id="keyField" hidden><span>رمز الإعداد (بيطلع بشاشة السيرفر لما يشتغل)</span><input class="input" id="a_key" dir="ltr" autocomplete="off" placeholder="XXXX-XXXX"></label>
         <label class="field"><span>اسم المستخدم (ID)</span><input class="input" id="a_user" dir="ltr" autocomplete="username" placeholder="mohammed"></label>
@@ -663,7 +663,7 @@ body.pf { background: var(--harbor); min-height: 100dvh; }
   <!-- المنصة -->
   <div class="pf-app" id="app" hidden>
     <header class="pf-top">
-      <div class="pf-brand"><span class="pf-logo sm" data-logo></span><span class="pf-word">Coffee<b>Flow</b></span></div>
+      <div class="pf-brand"><span class="pf-logo sm" data-logo></span><span class="pf-word">Cafe<b>Flow</b></span></div>
       <nav class="pf-nav" aria-label="أقسام المنصة">
         <button type="button" data-pf-view="tenants" aria-current="page">المحلات</button>
         <button type="button" data-pf-view="team">الفريق</button>
@@ -739,7 +739,7 @@ function __req(id) {
 }
 __def("standalone/platform-runtime.js", function (__e) {
 'use strict';
-// تجربة لوحة منصة CoffeeFlow بالموقع الثابت (بدون سيرفر): نفس server/platform.js بيشتغل داخل المتصفح
+// تجربة لوحة منصة CafeFlow بالموقع الثابت (بدون سيرفر): نفس server/platform.js بيشتغل داخل المتصفح
 // كل زائر إله نسخته: حساب تجربة جاهز، كافيه 1001 ومطعم 1002، وفيه يضيف محلات ويجمّدها.
 const { platformHandle } = __req("server/platform.js");
 const { DEMO_LOGIN } = __req("standalone/demo-registry.js");
@@ -771,7 +771,7 @@ window.__CAFE_DEMO__ = {
 
 __def("server/platform.js", function (__e) {
 'use strict';
-// منصة CoffeeFlow: سجل المحلات (كافيهات ومطاعم) وحسابات أصحاب المنصة ولوحة التحكم المشتركة
+// منصة CafeFlow: سجل المحلات (كافيهات ومطاعم) وحسابات أصحاب المنصة ولوحة التحكم المشتركة
 // السجل محفوظ بـ data/platform.json (platform-store.js)، وكل محل بياناته لحاله (db.js)
 // نفس الملف بيشتغل بنسخة الموقع الثابت داخل المتصفح (التخزين هناك standalone/demo-registry.js)
 const { withTenant, db, save, createTenantData, DEFAULT_TENANT } = __req("standalone/db-browser.js");
@@ -781,7 +781,7 @@ const { registerToken, randomToken, dropSessions } = __req("server/core.js");
 const { HttpError, monthKey, OPEN_STATUSES } = __req("server/logic.js");
 const { summarize } = __req("server/reports.js");
 
-const PLATFORM_NAME = 'CoffeeFlow';
+const PLATFORM_NAME = 'CafeFlow';
 const TYPES = { cafe: 'كافيه', restaurant: 'مطعم' };
 let reg = null;
 
@@ -1030,14 +1030,14 @@ Object.assign(__e, { PLATFORM_NAME, onTenantChange, isFrozen, tenantInfo, setupK
 __def("standalone/db-browser.js", function (__e) {
 'use strict';
 // نسخة المتصفح من مخزن البيانات: نفس واجهة server/db.js لكن على localStorage
-// تجربة CoffeeFlow بالموقع: كل محل إله مفتاح لحاله (1001 = نفس بيانات نسخة المحل الواحد القديمة)
+// تجربة CafeFlow بالموقع: كل محل إله مفتاح لحاله (1001 = نفس بيانات نسخة المحل الواحد القديمة)
 const { buildSeed, migrate } = __req("server/seed.js");
 const { DB_KEY, readRegistry } = __req("standalone/demo-registry.js");
 
 
 const DEFAULT_TENANT = '1001';
 const norm = (id) => (id == null || id === '' || id === 'local' ? DEFAULT_TENANT : String(id));
-const keyOf = (id) => (norm(id) === DEFAULT_TENANT ? DB_KEY : `coffeeflow-demo-db-${norm(id)}`);
+const keyOf = (id) => (norm(id) === DEFAULT_TENANT ? DB_KEY : `cafeflow-demo-db-${norm(id)}`);
 
 let current = DEFAULT_TENANT; // صفحة المحل بتثبّته من الرابط (?store=)
 const states = new Map();
@@ -1906,14 +1906,14 @@ Object.assign(__e, { R_CATEGORIES, R_ITEMS, R_RECIPES, R_COSTS, R_IMAGES, R_CATE
 
 __def("standalone/demo-registry.js", function (__e) {
 'use strict';
-// نسخة الموقع الثابت (تجربة CoffeeFlow بدون سيرفر): سجل المنصة بمتصفح الزائر
+// نسخة الموقع الثابت (تجربة CafeFlow بدون سيرفر): سجل المنصة بمتصفح الزائر
 // نفس دوال server/platform-store.js، بس التخزين localStorage وكل زائر إله نسخته لحاله.
 // أول مرة: حساب تجربة جاهز ومحلّين (كافيه 1001 ومطعم 1002) عشان أي حد يجرّب على طول.
 
 const DB_KEY = 'cafe-mohammad-demo-db';          // بيانات المحل الأول (نفس نسخة المحل الواحد القديمة)
-const REG_KEY = 'coffeeflow-demo-platform';      // سجل المنصة
+const REG_KEY = 'cafeflow-demo-platform';      // سجل المنصة
 const DEMO = true;
-const DEMO_LOGIN = { username: 'demo', password: 'coffeeflow' };
+const DEMO_LOGIN = { username: 'demo', password: 'cafeflow' };
 
 const getItem = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
 
@@ -4152,7 +4152,7 @@ Object.assign(__e, { detectBudget, basicBarista });
 
 __def("public/js/platform.js", function (__e) {
 'use strict';
-// لوحة منصة CoffeeFlow: كل الكافيهات والمطاعم المشتركة، مشتركة بين أصحاب المنصة
+// لوحة منصة CafeFlow: كل الكافيهات والمطاعم المشتركة، مشتركة بين أصحاب المنصة
 const { $, $$, esc, moneyText, toast, openSheet, closeSheet, timeAgo, THEMES, themePref, setTheme } = __req("public/js/common.js");
 const { icon } = __req("public/js/art.js");
 
@@ -4186,7 +4186,7 @@ async function papi(path, { method = 'GET', body } = {}) {
   return data;
 }
 
-// شعار CoffeeFlow: فنجان وبخار وموجة "فلو"
+// شعار CafeFlow: فنجان وبخار وموجة "فلو"
 const LOGO = `<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="var(--pf-mark)"/><path d="M17 27h25v9a12.5 12.5 0 0 1-25 0z" fill="none" stroke="#d4a359" stroke-width="3.4" stroke-linejoin="round"/><path d="M42 30h3.5a5 5 0 0 1 0 10H41" fill="none" stroke="#d4a359" stroke-width="3.2" stroke-linecap="round"/><path d="M23 21c0-4 4-4 4-8M30 21c0-4 4-4 4-8" fill="none" stroke="#f6ead4" stroke-width="2.6" stroke-linecap="round"/><path d="M13 52c6-3.5 12 3.5 18 0s12-3.5 18 0" fill="none" stroke="#d4a359" stroke-width="3" stroke-linecap="round"/></svg>`;
 
 // ───────── الدخول ─────────
@@ -4199,10 +4199,10 @@ async function showAuth() {
   setupMode = info.needsSetup;
   $('#keyField').hidden = !setupMode;
   $('#nameField').hidden = !setupMode;
-  $('#authTitle').textContent = setupMode ? 'أهلاً بـ CoffeeFlow' : 'دخول المنصة';
+  $('#authTitle').textContent = setupMode ? 'أهلاً بـ CafeFlow' : 'دخول المنصة';
   $('#authSub').textContent = setupMode
     ? 'أول مرة: اعمل حسابك (ID وكلمة سر)، وبعدين ضيف شريكك من قسم الفريق.'
-    : 'لوحة تحكم المحلات المشتركة بـ CoffeeFlow';
+    : 'لوحة تحكم المحلات المشتركة بـ CafeFlow';
   $('#authBtn').textContent = setupMode ? 'اعمل الحساب وادخل' : 'دخول';
   if (DEMO && !setupMode) {
     $('#authSub').textContent = `نسخة تجربة: ادخل بـ ${DEMO.login.username} وكلمة السر ${DEMO.login.password}`;
@@ -4594,7 +4594,7 @@ function moneyText(n, cur = '₪') {
   return `${Number.isInteger(v) ? v : v.toFixed(1)}${cur}`;
 }
 
-// CoffeeFlow: كل محل إله مسار (/1001) و API خاص (/api/t/1001)، وتخزين خاص بالجهاز
+// CafeFlow: كل محل إله مسار (/1001) و API خاص (/api/t/1001)، وتخزين خاص بالجهاز
 const TENANT = (location.pathname.match(/^\/(\d{3,8})(?:\/|$)/) || [])[1] ?? demoStore();
 /** نسخة التجربة على الموقع الثابت: customer.html?store=1002 (المحل 1001 هو الأصلي بدون رقم) */
 function demoStore() {
