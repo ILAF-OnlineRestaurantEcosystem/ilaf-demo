@@ -234,6 +234,14 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .brand-mark { display: inline-flex; align-items: center; gap: 8px; color: var(--foam); text-decoration: none; }
 .brand-mark svg { width: 30px; height: 37px; }
 .brand-mark-name { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1; color: var(--brass-hi); }
+/* شعار المحل الخاص (صور من إعدادات الكاشير) */
+.store-icon { width: 34px; height: 34px; object-fit: contain; border-radius: 8px; flex: none; }
+.brand-mark-img { height: 36px; max-width: 170px; width: auto; object-fit: contain; display: block; }
+.brand-logo-img { display: grid; place-items: center; width: 100%; }
+.brand-logo-img img { max-width: min(280px, 80%); max-height: 150px; object-fit: contain; }
+.fab .store-icon, .chat-avatar .store-icon { width: 36px; height: 36px; border-radius: 10px; }
+.side-brand .brand-mark-img { height: 40px; max-width: 150px; }
+.side-brand .store-icon { width: 36px; height: 36px; }
 
 /* الشعار المتحرك: الدلّة بتصب والكلمة بتتعبّى */
 .brand-logo { width: 100%; height: auto; overflow: visible; }
@@ -1979,12 +1987,28 @@ route('GET', '/admin/months/:key', ({ p }) => monthReport(p.key), { admin: true 
 route('GET', '/admin/table-insight/:n', ({ p }) => tableInsight(p.n), { admin: true });
 // ثيم الألوان: جاهز (palette) أو لون المحل (custom + color)، وبيتطبّق على المنيو أو اللوحة أو الاثنين
 const PALETTE_IDS = ['default', 'custom', 'terracotta', 'olive', 'purple', 'navy', 'burgundy', 'teal', 'rose', 'blue', 'charcoal'];
-function cleanTheme(t) {
+const hexColor = (v) => (/^#[0-9a-f]{6}$/i.test(String(v ?? '')) ? String(v).toLowerCase() : null);
+function cleanOneTheme(t) {
   const palette = PALETTE_IDS.includes(t?.palette) ? t.palette : 'default';
-  const color = /^#[0-9a-f]{6}$/i.test(String(t?.color ?? '')) ? String(t.color).toLowerCase() : null;
+  const color = hexColor(t?.color);
   if (palette === 'custom' && !color) throw new HttpError(400, 'اختار لون المحل.');
-  const applyTo = ['menu', 'admin', 'both'].includes(t?.applyTo) ? t.applyTo : 'menu';
-  return { palette, color, applyTo };
+  return { palette, color, accent: hexColor(t?.accent) }; // accent = اللون الثاني (اللمسات)
+}
+/** ثيم المنيو وثيم لوحة الكاشير كل واحد لحاله: { menu, admin } (وبنقبل الشكل القديم { palette, applyTo }) */
+function cleanTheme(t) {
+  if (t?.menu || t?.admin) return { menu: cleanOneTheme(t.menu), admin: cleanOneTheme(t.admin) };
+  const one = cleanOneTheme(t);
+  const to = ['menu', 'admin', 'both'].includes(t?.applyTo) ? t.applyTo : 'menu';
+  const def = { palette: 'default', color: null, accent: null };
+  return { menu: ['menu', 'both'].includes(to) ? one : def, admin: ['admin', 'both'].includes(to) ? { ...one } : { ...def } };
+}
+/** صورة شعار المحل: رابط من الرفع (/uploads/…) أو صورة مضمّنة صغيرة (نسخة الموقع)، أو فاضي = الشعار الافتراضي */
+function cleanLogo(v) {
+  const x = String(v ?? '').trim();
+  if (!x) return '';
+  if (/^\/uploads\/[\w.-]+\.(png|jpe?g|webp)$/i.test(x) || /^https:\/\/[^\s"'<>]+$/i.test(x)) return x;
+  if (/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(x) && x.length < 450_000) return x;
+  throw new HttpError(400, 'صورة الشعار مش مقبولة (PNG أو JPG أو WEBP، وحجم صغير).');
 }
 route('PUT', '/admin/settings', ({ body: b = {} }) => {
   const s = db().settings;
@@ -1999,6 +2023,8 @@ route('PUT', '/admin/settings', ({ body: b = {} }) => {
   if (b.cafeNotes != null) s.cafeNotes = str(b.cafeNotes, 600);
   if (b.businessType != null) s.businessType = b.businessType === 'restaurant' ? 'restaurant' : 'cafe';
   if (b.theme != null) s.theme = cleanTheme(b.theme);
+  if (b.logoIcon != null) s.logoIcon = cleanLogo(b.logoIcon); // بدل الدلّة/القدرة
+  if (b.logoName != null) s.logoName = cleanLogo(b.logoName); // صورة بدل كتابة اسم المحل
   if (b.city != null) s.city = str(b.city, 40);
   if (b.lat != null && b.lat !== '') s.lat = num(b.lat, { min: -90, max: 90 });
   if (b.lon != null && b.lon !== '') s.lon = num(b.lon, { min: -180, max: 180 });
@@ -5167,7 +5193,7 @@ Object.assign(__e, { BROKERS, randomId, cleanCode, siteCode, MqttLink, createHos
 __def("public/js/customer.js", function (__e) {
 'use strict';
 const { $, $$, esc, api, moneyText, toast, openSheet, closeSheet, reducedMotion, revealOnScroll, chime, SUGAR, STATUS, THEMES, themePref, setTheme, TENANT, storeKey, bizWords, applyBusiness, frozenNow } = __req("public/js/common.js");
-const { brandLogo, fitLogo, brandMark, dallahIcon, artTile, itemArt, icon, weatherIcon, leavesArt, setBusiness, isRestaurant } = __req("public/js/art.js");
+const { brandLogo, fitLogo, brandMark, dallahIcon, artTile, itemArt, icon, weatherIcon, leavesArt, setBusiness, isRestaurant, setStoreLogo } = __req("public/js/art.js");
 const { recommend, MOODS, SWEETNESS, PEOPLE } = __req("public/js/chooser.js");
 const { applyPalette } = __req("public/js/palette.js");
 
@@ -6314,6 +6340,7 @@ async function boot() {
   }
   enrichMenu();
   setBusiness(S().businessType); // مطعم = قدرة ومغرفة وألوان الفخار بدل الدلّة
+  setStoreLogo({ icon: S().logoIcon, name: S().logoName }); // شعار المحل الخاص إذا رفعه الكاشير
   applyBusiness(S().businessType);
   applyPalette(S().theme, 'menu', storeKey('palette.menu')); // ثيم الألوان اللي اختاره الكاشير
   $('#chatSub').textContent = `${W().host} · ${W().sub}`;
@@ -6602,6 +6629,11 @@ function brassDefs(gradId, darkId) {
 let BIZ = 'cafe';
 /** نوع المحل بيغيّر رسمة الهوية: كافيه = دلّة، مطعم = قدرة ومغرفة */
 function setBusiness(kind) { BIZ = kind === 'restaurant' ? 'restaurant' : 'cafe'; }
+// شعار المحل الخاص (من إعدادات الكاشير): صورة بدل الدلّة/القدرة، وصورة بدل كتابة الاسم
+let STORE_ICON = '';
+let STORE_NAME_IMG = '';
+const safeSrc = (u) => String(u ?? '').replace(/["<>]/g, '');
+function setStoreLogo({ icon = '', name = '' } = {}) { STORE_ICON = safeSrc(icon); STORE_NAME_IMG = safeSrc(name); }
 const isRestaurant = () => BIZ === 'restaurant';
 
 function potShape(gradId) {
@@ -6627,6 +6659,7 @@ function ladleShape(gradId, darkId) {
 const terraDefs = (id) => `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8946a"/><stop offset=".45" stop-color="#c4643a"/><stop offset="1" stop-color="#7d3218"/></linearGradient>`;
 
 function dallahIcon() {
+  if (STORE_ICON) return `<img class="store-icon" src="${STORE_ICON}" alt="">`;
   const g = nextId('dg'), d = nextId('dd');
   if (BIZ === 'restaurant') return `<svg viewBox="0 0 112 140" aria-hidden="true"><defs>${terraDefs(g)}</defs>${potShape(g)}</svg>`;
   return `<svg viewBox="0 0 112 140" aria-hidden="true"><defs>${brassDefs(g, d)}</defs><g transform="translate(-4 2)">${dallahShape(g, d)}</g></svg>`;
@@ -6638,6 +6671,7 @@ function dallahIcon() {
  * بعد إدراجه بالصفحة لازم تنادي fitLogo() ليتظبط حجم الكلمة ومستوى القهوة حسب الخط.
  */
 function brandLogo({ word = 'محمد', prefix = 'كافي', mode = 'pour' } = {}) {
+  if (STORE_NAME_IMG) return `<span class="brand-logo-img"><img src="${STORE_NAME_IMG}" alt="${String(`${prefix} ${word}`).replace(/[<>"&]/g, '')}"></span>`;
   const g = nextId('lg'), d = nextId('ld'), coffee = nextId('cf'), clip = nextId('wc'), crema = nextId('cr');
   const safe = (s) => String(s).replace(/[<>&"]/g, '');
   const w = safe(word), p = safe(prefix);
@@ -6728,7 +6762,9 @@ async function fitLogo(svg) {
 
 /** شعار مصغّر للهيدر: دلّة + اسم المحل */
 function brandMark(name = 'كافي محمد') {
-  return `<span class="brand-mark">${dallahIcon()}<span class="brand-mark-name">${String(name).replace(/[<>&]/g, '')}</span></span>`;
+  const label = String(name).replace(/[<>&"]/g, '');
+  if (STORE_NAME_IMG) return `<span class="brand-mark">${STORE_ICON ? dallahIcon() : ''}<img class="brand-mark-img" src="${STORE_NAME_IMG}" alt="${label}"></span>`;
+  return `<span class="brand-mark">${dallahIcon()}<span class="brand-mark-name">${label}</span></span>`;
 }
 
 // ───────── رسومات الأصناف (64×64، خط نحاسي) ─────────
@@ -6867,7 +6903,7 @@ function weatherIcon(w) {
   return w.isDay ? icon('sun') : icon('moon');
 }
 
-Object.assign(__e, { dallahShape, setBusiness, isRestaurant, potShape, ladleShape, dallahIcon, brandLogo, fitLogo, brandMark, ART_KEYS, ART_LABELS, itemArt, artTile, icon, leavesArt, weatherIcon });
+Object.assign(__e, { dallahShape, setBusiness, setStoreLogo, isRestaurant, potShape, ladleShape, dallahIcon, brandLogo, fitLogo, brandMark, ART_KEYS, ART_LABELS, itemArt, artTile, icon, leavesArt, weatherIcon });
 });
 
 __def("public/js/chooser.js", function (__e) {
@@ -6979,7 +7015,20 @@ const PALETTES = [
   { id: 'blue', name: 'أزرق', color: '#2f6fb0' },
   { id: 'charcoal', name: 'فحمي وذهبي', color: '#2b2b2b', accent: '#c9a24d' },
 ];
-const APPLY_TO = [['menu', 'المنيو (الزباين)'], ['admin', 'لوحة الكاشير'], ['both', 'الاثنين']];
+// كل واجهة إلها ثيمها لحالها: المنيو (الزباين) ولوحة الكاشير
+const TARGETS = [['menu', 'ألوان المنيو (الزباين)'], ['admin', 'ألوان لوحة الكاشير']];
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+
+/** الثيم المحفوظ (الشكل الجديد أو القديم) ← { menu: {...}, admin: {...} } */
+function normalizeTheme(theme) {
+  const def = { palette: 'default', color: null, accent: null };
+  if (!theme) return { menu: { ...def }, admin: { ...def } };
+  if (theme.menu || theme.admin) return { menu: { ...def, ...(theme.menu ?? {}) }, admin: { ...def, ...(theme.admin ?? {}) } };
+  // الشكل القديم: ثيم واحد + applyTo
+  const one = { ...def, palette: theme.palette ?? 'default', color: theme.color ?? null };
+  const to = theme.applyTo ?? 'menu';
+  return { menu: ['menu', 'both'].includes(to) ? one : { ...def }, admin: ['admin', 'both'].includes(to) ? { ...one } : { ...def } };
+}
 
 // ───────── رياضيات الألوان ─────────
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -7113,7 +7162,8 @@ const BASE = {
 /** الثيم المحفوظ بإعدادات المحل → لون أساسي (أو null = الهوية الأصلية) */
 function themeColors(theme) {
   if (!theme || !theme.palette || theme.palette === 'default') return null;
-  if (theme.palette === 'custom') return /^#[0-9a-f]{6}$/i.test(theme.color ?? '') ? { color: theme.color, accent: null } : null;
+  // لون المحل: لون أساسي (الأزرار والعناوين) + لون ثاني اختياري (اللمسات)
+  if (theme.palette === 'custom') return HEX_RE.test(theme.color ?? '') ? { color: theme.color, accent: HEX_RE.test(theme.accent ?? '') ? theme.accent : null } : null;
   const p = PALETTES.find((x) => x.id === theme.palette);
   return p ? { color: p.color, accent: p.accent ?? null } : null;
 }
@@ -7134,12 +7184,12 @@ function paletteCss(theme) {
 }
 
 /**
- * بيطبّق ثيم المحل على هالصفحة (page = 'menu' للزبون أو 'admin' للكاشير) إذا الكاشير اختار يطبّقه عليها.
+ * بيطبّق ثيم هالصفحة (page = 'menu' للزبون أو 'admin' للكاشير) من ثيمات المحل.
  * وبيحفظه بالمتصفح عشان المرة الجاية يطلع من أول لحظة (بدون وميض الألوان القديمة).
  */
 function applyPalette(theme, page, cacheKey = null) {
-  const on = Boolean(themeColors(theme)) && ['both', page].includes(theme.applyTo ?? 'menu');
-  const css = on ? paletteCss(theme) : '';
+  theme = normalizeTheme(theme)[page]; // ثيم هالواجهة بس
+  const css = paletteCss(theme);
   let el = document.getElementById('cfPalette');
   if (css) {
     if (!el) { el = document.createElement('style'); el.id = 'cfPalette'; document.head.append(el); }
@@ -7152,7 +7202,7 @@ function applyPalette(theme, page, cacheKey = null) {
   if (cacheKey) { try { if (css) localStorage.setItem(cacheKey, css); else localStorage.removeItem(cacheKey); } catch { /* */ } }
 }
 
-Object.assign(__e, { PALETTES, APPLY_TO, hexToRgb, hsl, contrast, paletteFrom, themeColors, previewVars, varsToStyle, paletteCss, applyPalette });
+Object.assign(__e, { PALETTES, TARGETS, normalizeTheme, hexToRgb, hsl, contrast, paletteFrom, themeColors, previewVars, varsToStyle, paletteCss, applyPalette });
 });
 
 __req("standalone/runtime.js");
