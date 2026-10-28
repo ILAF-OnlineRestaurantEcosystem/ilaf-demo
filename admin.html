@@ -40,6 +40,9 @@
    بيج دافي + بني قهوة + نحاس الدلّة (ستايل تطبيق جوال)
    ───────────────────────────────────────────── */
 :root {
+  /* العروض والشريط المتحرك: بلون المحل الأساسي (مليان مش باهت)، وشارة الخصم أصفر ملفت */
+  --promo-a: var(--brass); --promo-b: color-mix(in srgb, var(--brass) 72%, #000); --promo-ink: var(--on-brass);
+  --sale: #ffd23f; --sale-ink: #3a2500;
   --abyss: #e9dfd1;      /* الخلفية الخارجية حول التطبيق */
   --harbor: #f4ece1;     /* سطح التطبيق: بيج دافي */
   --tide: #ffffff;       /* البطاقات: أبيض نقي بيبرز الأصناف */
@@ -321,19 +324,25 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 /* بطاقات العروض */
 .offer {
   position: relative; overflow: hidden; border-radius: var(--r-lg); padding: 18px; display: grid; gap: 10px;
-  background: linear-gradient(150deg, #f3ead9, #ece0c9); box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(168, 131, 79, .3);
+  background: linear-gradient(150deg, var(--promo-a), var(--promo-b)); color: var(--promo-ink); box-shadow: 0 16px 30px -20px var(--promo-b);
 }
 .offer-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.offer-title { font-size: 19px; font-weight: 700; line-height: 1.3; color: var(--brass-hi); }
-.offer-desc { color: var(--foam-2); font-size: 13.5px; }
+.offer-title { font-size: 20px; font-weight: 800; line-height: 1.3; }
+.offer-desc { font-size: 13.5px; opacity: .9; }
 .offer-arts { display: flex; }
-.offer-arts .art { width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 0 0 3px #f1e7d4; }
+.offer-arts .art { width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 0 0 3px var(--promo-a); }
 .offer-arts .art + .art { margin-inline-start: -12px; }
 .offer-arts .art svg { width: 58%; height: 58%; }
 .offer-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .offer-price { display: flex; align-items: baseline; gap: 8px; font-weight: 700; }
 .offer-price .num { font-size: 22px; }
-.offer-price s { color: var(--foam-3); font-weight: 400; font-size: 13px; }
+.offer-price s { opacity: .7; font-weight: 400; font-size: 13px; }
+/* أزرار جوا بطاقة العرض الملوّنة: أبيض على لون المحل */
+.btn-promo { background: var(--promo-ink); color: var(--promo-a); box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .55); }
+.btn-promo:hover { filter: brightness(.96); }
+.btn-promo-line { background: transparent; color: var(--promo-ink); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--promo-ink) 65%, transparent); }
+.btn-promo-line:hover { background: rgba(255, 255, 255, .1); }
+.offer .badge-mute { background: rgba(255, 255, 255, .18); color: var(--promo-ink); }
 
 /* زخرفة الأوراق في الزوايا */
 .leaves { position: absolute; pointer-events: none; color: var(--gold); opacity: .32; width: 150px; }
@@ -799,7 +808,6 @@ tr.is-current td { background: var(--gold-soft); }
 .pal-opt[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--brass), 0 8px 18px -12px rgba(var(--tint), .6); }
 .pal-opt[aria-pressed="true"]::after { content: '✓'; position: absolute; top: 6px; inset-inline-start: 8px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; background: var(--brass); color: var(--on-brass); }
 .pal-sw { position: relative; width: 44px; height: 44px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12); overflow: hidden; }
-.pal-custom input[type="color"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
 .pal-custom .pal-sw::before { content: '+'; position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: 20px; font-weight: 700; text-shadow: 0 1px 3px rgba(0, 0, 0, .5); pointer-events: none; }
 .pal-opt small { display: block; font-weight: 500; color: var(--foam-3); }
 .pal-apply { max-width: 520px; }
@@ -865,7 +873,7 @@ tr.is-current td { background: var(--gold-soft); }
 .pal-custom .pal-pick { display: grid; justify-items: center; gap: 6px; font: inherit; color: inherit; }
 .pal-colors { display: flex; gap: 6px; }
 .pal-colors label { display: grid; justify-items: center; gap: 2px; font-size: 10.5px; font-weight: 500; color: var(--foam-2); cursor: pointer; }
-.pal-colors input[type="color"] { width: 32px; height: 26px; padding: 0; border: 0; border-radius: 8px; background: none; cursor: pointer; }
+.pal-colors input[type="color"] { width: 40px; height: 32px; padding: 0; border: 0; border-radius: 10px; background: none; cursor: pointer; }
 .pal-colors input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
 .pal-colors input[type="color"]::-webkit-color-swatch { border: 1px solid var(--line-strong); border-radius: 8px; }
 .pal-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 6px; }
@@ -956,6 +964,33 @@ tr.is-current td { background: var(--gold-soft); }
 .weak-pin span { flex: 1; font-size: 13.5px; }
 .weak-pin .btn { background: var(--st-new); color: #fff; }
 
+/* ───────── الشريط المتحرك بصفحة الزبون (بقسم القائمة) ───────── */
+.feat-panel { display: grid; gap: 12px; margin-bottom: 14px; padding: 16px; border-radius: 20px; background: var(--tide); box-shadow: var(--shadow-card), inset 0 0 0 1.5px color-mix(in srgb, var(--brass) 35%, transparent); }
+.fp-head { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.fp-ic { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: #ffd23f; color: #3a2500; }
+.fp-ic svg { width: 22px; height: 22px; fill: currentColor; stroke: none; }
+.fp-head h3 { font-size: 16px; font-weight: 700; }
+.fp-head p { font-size: 12.5px; color: var(--foam-2); line-height: 1.7; }
+.fp-head p svg { width: 14px; height: 14px; vertical-align: -2px; fill: #e0a100; stroke: #e0a100; }
+.fp-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.fp-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 4px 4px 10px; border-radius: 999px; background: var(--inset); box-shadow: inset 0 0 0 1px var(--line); font-size: 13px; }
+.fp-chip .art { width: 30px; height: 30px; border-radius: 50%; flex: none; }
+.fp-chip b { font-weight: 600; }
+.fp-chip .icon-btn { width: 28px; height: 28px; }
+.fp-chip .icon-btn svg { width: 14px; height: 14px; }
+.fp-n { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; background: var(--brass); color: var(--on-brass); }
+.fp-auto { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; color: var(--foam-2); }
+.fp-auto svg { width: 18px; height: 18px; flex: none; color: #e0a100; }
+.fp-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.fp-form .field { flex: 1 1 160px; margin: 0; }
+.feat-star svg { transition: transform .3s var(--ease-spring); }
+.feat-star[aria-pressed="true"] { color: #e0a100; }
+.feat-star[aria-pressed="true"] svg { fill: currentColor; transform: scale(1.1); }
+.irow { grid-template-columns: 56px minmax(0, 2fr) minmax(0, 1fr) 90px 120px 40px 44px; }
+@media (max-width: 980px) {
+  .irow { grid-template-columns: 52px minmax(0, 1fr) auto auto 36px 36px; gap: 8px; }
+}
+
 </style>
   <style>
 /* ─────────────────────────────────────────────
@@ -1018,14 +1053,12 @@ tr.is-current td { background: var(--gold-soft); }
 [data-theme="dark"] .status-chip.preparing, [data-theme="dark"] .status-pill.preparing { background: rgba(217, 165, 82, .16); color: #ecc27e; }
 
 /* العروض */
-[data-theme="dark"] .offer { background: linear-gradient(150deg, #2c1b12, #22150e); box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(212, 163, 89, .25); }
-[data-theme="dark"] .offer-arts .art { box-shadow: 0 0 0 3px #2c1b12; }
 
 /* ───── صفحة الزبون ───── */
 [data-theme="dark"] .app-body { background: radial-gradient(80% 60% at 50% 0%, #26160d, transparent 70%), var(--abyss); }
 
 /* الأسعار والأيقونات النشطة بالغامق: ذهبي (بيبرز ومقروء) */
-[data-theme="dark"] .item-row .price b, [data-theme="dark"] .pop-card .price, [data-theme="dark"] .offer-price .num { color: var(--brass-hi); }
+[data-theme="dark"] .item-row .price b, [data-theme="dark"] .pop-card .price { color: var(--brass-hi); }
 /* زر نديم: الدلّة ذهبية، فخلفيته بني عشان تبيّن */
 [data-theme="dark"] .fab { background: #3a2417; box-shadow: 0 14px 28px -12px rgba(0, 0, 0, .9), inset 0 0 0 1px rgba(212, 163, 89, .35); }
 [data-theme="dark"] .fab::after { box-shadow: 0 0 0 2px #3a2417; }
@@ -1129,13 +1162,14 @@ tr.is-current td { background: var(--gold-soft); }
 [data-theme="dark"][data-biz="restaurant"] .btn-brass:hover { background: #f0936a; }
 [data-biz="restaurant"] .btn-ghost { box-shadow: inset 0 0 0 1.5px rgba(168, 72, 42, .45); }
 [data-theme="dark"][data-biz="restaurant"] .btn-ghost { box-shadow: inset 0 0 0 1.5px rgba(224, 120, 78, .5); }
-[data-biz="restaurant"] .offer { background: linear-gradient(150deg, #fbeee2, #f3e0cd); }
-[data-theme="dark"][data-biz="restaurant"] .offer { background: linear-gradient(150deg, #2c1d15, #21160f); }
 [data-theme="dark"][data-biz="restaurant"] .fab { background: #3a2016; }
 [data-biz="restaurant"] .side { background: linear-gradient(180deg, #8a3a20, #4a1d0e); }
 [data-theme="dark"][data-biz="restaurant"] .side { background: linear-gradient(180deg, #2c1b14, #1a100c); }
 [data-theme="dark"][data-biz="restaurant"] .tabbar button[aria-current="page"] { color: #a8482a; }
 [data-biz="restaurant"] [data-cafe-only] { display: none !important; }
+:root:not([data-biz="restaurant"]) [data-rest-only] { display: none !important; }
+/* بالغامق: العروض والشريط المتحرك أغمق شوي بلون المحل (مش أصفر فاقع) */
+[data-theme="dark"] { --promo-a: color-mix(in srgb, var(--brass) 46%, var(--tide)); --promo-b: color-mix(in srgb, var(--brass) 20%, var(--harbor)); --promo-ink: #fff8ef; }
 
 /* ─────────────────────────────────────────────
    ثيم الألوان اللي اختاره الكاشير (palette.js بيحط المتغيرات على :root[data-palette])
@@ -1145,8 +1179,6 @@ tr.is-current td { background: var(--gold-soft); }
 :root[data-palette] .side-brand .brand-mark-name { color: var(--side-ink); }
 :root[data-palette] .nav-btn[aria-current="page"] { background: var(--harbor); color: var(--brass-hi); }
 :root[data-palette][data-theme="dark"] .nav-btn[aria-current="page"] { background: color-mix(in srgb, var(--brass) 18%, transparent); color: var(--brass); }
-:root[data-palette] .offer, :root[data-palette][data-theme="dark"] .offer { background: linear-gradient(150deg, var(--offer-a), var(--offer-b)); box-shadow: var(--shadow-card), inset 0 0 0 1px var(--line); }
-:root[data-palette] .offer-arts .art, :root[data-palette][data-theme="dark"] .offer-arts .art { box-shadow: 0 0 0 3px var(--offer-a); }
 :root[data-palette] .fab, :root[data-palette][data-theme="dark"] .fab { background: var(--fab-bg); }
 :root[data-palette] .fab::after, :root[data-palette][data-theme="dark"] .fab::after { box-shadow: 0 0 0 2px var(--fab-bg); }
 :root[data-palette] .btn-brass:hover, :root[data-palette][data-theme="dark"] .btn-brass:hover { background: var(--brass-hi); }
@@ -1233,6 +1265,7 @@ tr.is-current td { background: var(--gold-soft); }
             <button class="btn btn-brass btn-sm" id="addItem" type="button"></button>
           </div>
         </div>
+        <div id="featPanel"></div>
         <div class="item-rows" id="itemRows"></div>
       </section>
 
@@ -2124,6 +2157,19 @@ function cleanLogo(v) {
   if (/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(x) && x.length < 450_000) return x;
   throw new HttpError(400, 'صورة الشعار مش مقبولة (PNG أو JPG أو WEBP، وحجم صغير).');
 }
+/**
+ * الشريط المتحرك أول صفحة الزبون: عنوان + أصناف بترتيب الكاشير + كم ثانية على كل صنف.
+ * بدون أصناف = الأكثر طلباً لحاله.
+ */
+function cleanFeatured(f) {
+  const known = new Set(db().items.map((i) => i.id));
+  const items = [...new Set((Array.isArray(f?.items) ? f.items : []).map((x) => String(x)))].filter((id) => known.has(id)).slice(0, 10);
+  return {
+    title: str(f?.title, 30) || 'الأكثر طلباً',
+    items,
+    seconds: Math.round(num(f?.seconds ?? 4, { min: 2, max: 10 })),
+  };
+}
 route('PUT', '/admin/settings', async ({ body: b = {} }) => {
   const s = db().settings;
   if (b.cafeName != null) s.cafeName = str(b.cafeName, 40) || s.cafeName;
@@ -2139,6 +2185,7 @@ route('PUT', '/admin/settings', async ({ body: b = {} }) => {
   if (b.theme != null) s.theme = cleanTheme(b.theme);
   if (b.logoIcon != null) s.logoIcon = cleanLogo(b.logoIcon); // بدل الدلّة/القدرة
   if (b.logoName != null) s.logoName = cleanLogo(b.logoName); // صورة بدل كتابة اسم المحل
+  if (b.featured != null) s.featured = cleanFeatured(b.featured);
   if (b.city != null) s.city = str(b.city, 40);
   if (b.lat != null && b.lat !== '') s.lat = num(b.lat, { min: -90, max: 90 });
   if (b.lon != null && b.lon !== '') s.lon = num(b.lon, { min: -180, max: 180 });
@@ -2162,6 +2209,7 @@ route('POST', '/admin/menu-template', ({ body }) => {
   d.items = t.items;
   d.offers = t.offers;
   d.settings.businessType = type;
+  if (d.settings.featured) d.settings.featured.items = []; // الأصناف القديمة راحت، فالشريط بيرجع للأكثر طلباً
   save();
   return { data: { ok: true, items: t.items.length, categories: t.categories.length }, events: [toAll('menu:changed')] };
 }, { admin: true });
@@ -3189,7 +3237,7 @@ function comboValue(offer) {
 
 // اللي بيوصل للزبون من إعدادات المحل: قائمة مسموحة بس (أي حقل جديد سري ما بيطلع بالغلط)
 const PUBLIC_SETTINGS = ['cafeName', 'brandWord', 'tagline', 'businessType', 'currency', 'currencyName', 'city', 'lat', 'lon',
-  'baristaName', 'wifi', 'hours', 'cafeNotes', 'theme', 'logoIcon', 'logoName'];
+  'baristaName', 'wifi', 'hours', 'cafeNotes', 'theme', 'logoIcon', 'logoName', 'featured'];
 function publicSettings() {
   const s = db().settings;
   return Object.fromEntries(PUBLIC_SETTINGS.filter((k) => s[k] !== undefined).map((k) => [k, s[k]]));
@@ -5955,8 +6003,11 @@ function renderMenuView() {
       </span>`).join('');
   const q = S.search.trim();
   const list = items.filter((i) => (S.menuCat === 'all' || i.categoryId === S.menuCat) && (!q || i.name.includes(q) || (i.tags ?? []).some((t) => t.includes(q))));
+  renderFeatPanel();
+  const featIds = featOf().items;
   $('#itemRows').innerHTML = list.length ? list.map((it) => {
     const cat = categories.find((c) => c.id === it.categoryId);
+    const inFeat = featIds.includes(it.id);
     return `
       <div class="irow ${it.available ? '' : 'is-off'}">
         ${artTile(it)}
@@ -5964,9 +6015,50 @@ function renderMenuView() {
         <span class="irow-cat muted">${esc(cat?.name ?? '')}</span>
         <span>${money(it.price, cur())}${stockBadge(it)}</span>
         <label class="switch"><input type="checkbox" data-avail="${esc(it.id)}" ${it.available ? 'checked' : ''}><span class="track"></span><span class="lbl">${it.available ? 'متوفر' : 'نفد'}</span></label>
+        <button class="icon-btn feat-star" type="button" data-feat-toggle="${esc(it.id)}" aria-pressed="${inFeat}" aria-label="${inFeat ? 'شيل' : 'حط'} ${esc(it.name)} ${inFeat ? 'من' : 'بـ'}الشريط المتحرك" title="${inFeat ? 'بالشريط المتحرك (اكبس لتشيله)' : 'حطه بالشريط المتحرك'}">${icon('star')}</button>
         <button class="icon-btn" type="button" data-edit-item="${esc(it.id)}" aria-label="تعديل ${esc(it.name)}">${icon('edit')}</button>
       </div>`;
   }).join('') : '<div class="empty"><p>ما في أصناف هون. ضيف صنف جديد من الزر فوق.</p></div>';
+}
+
+// ───────── الشريط المتحرك أول صفحة الزبون: الكاشير بيختار الأصناف وترتيبها ─────────
+const featOf = () => ({ title: 'الأكثر طلباً', items: [], seconds: 4, ...(S.data.settings.featured ?? {}) });
+function renderFeatPanel() {
+  const f = featOf();
+  const items = f.items.map((id) => S.data.items.find((i) => i.id === id)).filter(Boolean);
+  $('#featPanel').innerHTML = `
+    <section class="feat-panel" aria-label="الشريط المتحرك">
+      <div class="fp-head">
+        <span class="fp-ic">${icon('star')}</span>
+        <div><h3>الشريط المتحرك بصفحة الزبون</h3>
+          <p>أول شي بيشوفه الزبون: صنف ورا صنف، كل واحد ${f.seconds} ثواني. اختار الأصناف من النجمة ${icon('star')} جنب كل صنف تحت.</p></div>
+      </div>
+      <div class="fp-items">${items.length ? items.map((it, k) => `
+        <span class="fp-chip"><span class="fp-n">${k + 1}</span>${artTile(it)}<b>${esc(it.name)}</b>
+          ${k ? `<button type="button" class="icon-btn" data-feat-move="${esc(it.id)}" aria-label="قدّم ${esc(it.name)}" title="قدّمه">${icon('back')}</button>` : ''}
+          <button type="button" class="icon-btn" data-feat-toggle="${esc(it.id)}" aria-label="شيل ${esc(it.name)} من الشريط" title="شيله">${icon('close')}</button></span>`).join('')
+        : `<p class="fp-auto">${icon('flame')}<span>هلق بيطلع <b>الأكثر طلباً</b> لحاله. اكبس النجمة جنب أي صنف عشان تختار انت شو يطلع.</span></p>`}</div>
+      <div class="fp-form">
+        <label class="field"><span>العنوان فوق الصنف</span><input class="input" id="featTitle" maxlength="30" value="${esc(f.title)}" placeholder="الأكثر طلباً"></label>
+        <label class="field"><span>كل صنف بيوقف</span><select class="input" id="featSecs">${[3, 4, 5, 6, 8].map((n) => `<option value="${n}" ${n === f.seconds ? 'selected' : ''}>${n} ثواني</option>`).join('')}</select></label>
+        <button class="btn btn-brass btn-sm" type="button" id="featSave">${icon('check')}احفظ</button>
+      </div>
+    </section>`;
+}
+async function saveFeatured(patch, msg) {
+  try {
+    S.data.settings = await call('/settings', { method: 'PUT', body: { featured: { ...featOf(), ...patch } } });
+    renderMenuView();
+    if (msg) toast(msg, 'ok');
+  } catch (err) { toast(err.message, 'err'); }
+}
+function toggleFeatured(id) {
+  const f = featOf();
+  const it = S.data.items.find((i) => i.id === id);
+  if (f.items.includes(id)) return saveFeatured({ items: f.items.filter((x) => x !== id) }, `شلت ${it?.name ?? 'الصنف'} من الشريط`);
+  if (f.items.length >= 10) return toast('الحد 10 أصناف بالشريط. شيل واحد أول.', 'err');
+  if (it && !it.available) toast(`${it.name} مش متوفر هلق، فما رح يطلع للزبون لحد ما يرجع`);
+  return saveFeatured({ items: [...f.items, id] }, `${it?.name ?? 'الصنف'} صار بالشريط ⭐`);
 }
 
 /** شارة المخزن بقائمة الأصناف: باقي كم، أو نفد */
@@ -6929,8 +7021,8 @@ function renderPalPicker() {
         <div class="pal-opt pal-custom" aria-pressed="${th.palette === 'custom'}">
           <button type="button" class="pal-pick" data-pal="custom"><span class="pal-sw" id="palCustomSw" style="background:linear-gradient(135deg, ${esc(th.color)} 0 55%, ${esc(th.accent)} 55%)"></span><span>لون محلك</span></button>
           <div class="pal-colors">
-            <label title="اللون الأساسي (الأزرار والعناوين)"><input type="color" id="palColor" value="${esc(th.color)}"><span>أساسي</span></label>
-            <label title="اللون الثاني (اللمسات والأيقونات)"><input type="color" id="palAccent" value="${esc(th.accent)}"><span>ثاني</span></label>
+            <label title="اللون الأساسي (الأزرار والعناوين)"><input type="color" id="palColor" value="${esc(th.color)}"><span>الأساسي</span></label>
+            <label title="اللون الثاني (اللمسات والأيقونات)"><input type="color" id="palAccent" value="${esc(th.accent)}"><span>الثاني</span></label>
           </div>
         </div>
       </div>
@@ -7192,9 +7284,19 @@ function bind() {
     if (d.palTarget) { S.themeTarget = d.palTarget; return renderPalPicker(); }
     if (d.pal) {
       S.themeDraft[S.themeTarget].palette = d.pal;
-      return syncPalPicker();
+      syncPalPicker();
+      if (d.pal === 'custom') { const inp = $('#palColor'); try { inp.showPicker(); } catch { inp.click(); } } // نافذة اللون بتنفتح فوراً
+      return;
     }
     if (d.palApply) return applyThemeNow(d.palApply);
+    if (d.featToggle) return toggleFeatured(d.featToggle);
+    if (d.featMove) {
+      const a = [...featOf().items];
+      const k = a.indexOf(d.featMove);
+      if (k > 0) { [a[k - 1], a[k]] = [a[k], a[k - 1]]; return saveFeatured({ items: a }); }
+      return;
+    }
+    if (t.id === 'featSave') return saveFeatured({ title: $('#featTitle').value.trim() || 'الأكثر طلباً', seconds: Number($('#featSecs').value) }, 'انحفظ الشريط ✓ الزباين بيشوفوه هلق');
     if (d.logoDel) {
       try { S.data.settings = await call('/settings', { method: 'PUT', body: { [d.logoDel]: '' } }); renderShell(); renderSettings(); toast('رجع الشعار الافتراضي', 'ok'); } catch (err) { toast(err.message, 'err'); }
       return;
@@ -8050,6 +8152,15 @@ function fit(h, s, l, against, min, dir) {
   return c;
 }
 
+/**
+ * ألوان الأساس ثابتة بكل المحلات (الخلفية، البطاقات، الكتابة) عشان الكلام يضل واضح،
+ * ولون المحل بيطلع مليان على الهوية بس: الأزرار، الشريط المتحرك، العروض، الشريط المختار.
+ */
+const NEUTRAL = {
+  light: { abyss: '#e7e4de', harbor: '#f4f2ee', line: '#e4e0d9', lineStrong: '#d2cdc4', inset: '#faf9f7', foam: '#1c1a17', foam2: '#565049', foam3: '#78726a' },
+  dark: { abyss: '#0a0908', harbor: '#121110', tide: '#1c1a18', swell: '#252320', line: '#2e2b28', lineStrong: '#3a3632', inset: '#171513', foam: '#f3f0ec', foam2: '#b8b1a8', foam3: '#8e877e' },
+};
+
 /** كل متغيرات الواجهة من لون واحد: { light: {...}, dark: {...} } */
 function paletteFrom(color, accent = null) {
   const [h0, s0, l0] = rgbToHsl(hexToRgb(color));
@@ -8059,22 +8170,22 @@ function paletteFrom(color, accent = null) {
   const st = grey ? Math.min(sa, 0.35) * 0.5 : Math.min(s0, 0.6); // تشبّع الخلفيات (هادي)
 
   // ── الفاتح ──
-  const harbor = hsl(h, st * 0.45, 0.95);
-  const foam = hsl(h, st * 0.55, 0.12);
+  const N = NEUTRAL.light;
+  const harbor = N.harbor;
   const brass = fit(h0, s0, Math.min(l0, 0.5), '#ffffff', 4.8, -1);
   const [bh, bs, bl] = rgbToHsl(hexToRgb(brass));
   const light = {
-    '--abyss': hsl(h, st * 0.45, 0.89),
+    '--abyss': N.abyss,
     '--harbor': harbor,
     '--tide': '#ffffff',
     '--swell': '#ffffff',
-    '--tint': rgbList(foam),
-    '--line': hsl(h, st * 0.3, 0.88),
-    '--line-strong': hsl(h, st * 0.3, 0.8),
-    '--inset': hsl(h, st * 0.3, 0.975),
-    '--foam': foam,
-    '--foam-2': fit(h, st * 0.3, 0.42, harbor, 4.8, -1),
-    '--foam-3': hsl(h, st * 0.25, 0.55),
+    '--tint': rgbList(N.foam),
+    '--line': N.line,
+    '--line-strong': N.lineStrong,
+    '--inset': N.inset,
+    '--foam': N.foam,
+    '--foam-2': N.foam2,
+    '--foam-3': N.foam3,
     '--brass': brass,
     '--brass-hi': fit(bh, bs, bl - 0.08, harbor, 6, -1),
     '--brass-lo': hsl(bh, bs * 0.45, 0.72),
@@ -8092,24 +8203,25 @@ function paletteFrom(color, accent = null) {
   };
 
   // ── الغامق ──
-  const dHarbor = hsl(h, st * 0.5, 0.07);
+  const D = NEUTRAL.dark;
+  const dHarbor = D.harbor;
   const dBrassBase = grey && accent ? accent : color;
   const [dh, ds, dl] = rgbToHsl(hexToRgb(dBrassBase));
   const dSat = grey && !accent ? 0 : Math.max(ds, 0.35); // رمادي بدون لمسة: بيضل رمادي
   const dBrass = fit(dh, dSat, Math.max(dl, 0.5), dHarbor, 6, 1);
-  const dFoam = hsl(h, st * 0.3, 0.93);
+  const dFoam = D.foam;
   const dark = {
-    '--abyss': hsl(h, st * 0.5, 0.04),
+    '--abyss': D.abyss,
     '--harbor': dHarbor,
-    '--tide': hsl(h, st * 0.45, 0.11),
-    '--swell': hsl(h, st * 0.45, 0.14),
+    '--tide': D.tide,
+    '--swell': D.swell,
     '--tint': rgbList(dFoam),
-    '--line': hsl(h, st * 0.35, 0.18),
-    '--line-strong': hsl(h, st * 0.35, 0.24),
-    '--inset': hsl(h, st * 0.45, 0.09),
+    '--line': D.line,
+    '--line-strong': D.lineStrong,
+    '--inset': D.inset,
     '--foam': dFoam,
-    '--foam-2': fit(h, st * 0.2, 0.66, hsl(h, st * 0.45, 0.11), 5, 1),
-    '--foam-3': hsl(h, st * 0.18, 0.55),
+    '--foam-2': D.foam2,
+    '--foam-3': D.foam3,
     '--brass': dBrass,
     '--brass-hi': fit(dh, dSat, rgbToHsl(hexToRgb(dBrass))[2] + 0.07, dHarbor, 7, 1),
     '--brass-lo': hsl(dh, ds * 0.45, 0.35),

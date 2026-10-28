@@ -41,6 +41,9 @@
    بيج دافي + بني قهوة + نحاس الدلّة (ستايل تطبيق جوال)
    ───────────────────────────────────────────── */
 :root {
+  /* العروض والشريط المتحرك: بلون المحل الأساسي (مليان مش باهت)، وشارة الخصم أصفر ملفت */
+  --promo-a: var(--brass); --promo-b: color-mix(in srgb, var(--brass) 72%, #000); --promo-ink: var(--on-brass);
+  --sale: #ffd23f; --sale-ink: #3a2500;
   --abyss: #e9dfd1;      /* الخلفية الخارجية حول التطبيق */
   --harbor: #f4ece1;     /* سطح التطبيق: بيج دافي */
   --tide: #ffffff;       /* البطاقات: أبيض نقي بيبرز الأصناف */
@@ -322,19 +325,25 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 /* بطاقات العروض */
 .offer {
   position: relative; overflow: hidden; border-radius: var(--r-lg); padding: 18px; display: grid; gap: 10px;
-  background: linear-gradient(150deg, #f3ead9, #ece0c9); box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(168, 131, 79, .3);
+  background: linear-gradient(150deg, var(--promo-a), var(--promo-b)); color: var(--promo-ink); box-shadow: 0 16px 30px -20px var(--promo-b);
 }
 .offer-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.offer-title { font-size: 19px; font-weight: 700; line-height: 1.3; color: var(--brass-hi); }
-.offer-desc { color: var(--foam-2); font-size: 13.5px; }
+.offer-title { font-size: 20px; font-weight: 800; line-height: 1.3; }
+.offer-desc { font-size: 13.5px; opacity: .9; }
 .offer-arts { display: flex; }
-.offer-arts .art { width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 0 0 3px #f1e7d4; }
+.offer-arts .art { width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 0 0 3px var(--promo-a); }
 .offer-arts .art + .art { margin-inline-start: -12px; }
 .offer-arts .art svg { width: 58%; height: 58%; }
 .offer-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .offer-price { display: flex; align-items: baseline; gap: 8px; font-weight: 700; }
 .offer-price .num { font-size: 22px; }
-.offer-price s { color: var(--foam-3); font-weight: 400; font-size: 13px; }
+.offer-price s { opacity: .7; font-weight: 400; font-size: 13px; }
+/* أزرار جوا بطاقة العرض الملوّنة: أبيض على لون المحل */
+.btn-promo { background: var(--promo-ink); color: var(--promo-a); box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .55); }
+.btn-promo:hover { filter: brightness(.96); }
+.btn-promo-line { background: transparent; color: var(--promo-ink); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--promo-ink) 65%, transparent); }
+.btn-promo-line:hover { background: rgba(255, 255, 255, .1); }
+.offer .badge-mute { background: rgba(255, 255, 255, .18); color: var(--promo-ink); }
 
 /* زخرفة الأوراق في الزوايا */
 .leaves { position: absolute; pointer-events: none; color: var(--gold); opacity: .32; width: 150px; }
@@ -469,7 +478,7 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .helper-card, .barista-card {
   display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; text-align: start;
   padding: 16px; border-radius: 20px; background: var(--tide);
-  box-shadow: var(--shadow-card), inset 0 0 0 1.5px rgba(168, 131, 79, .45);
+  box-shadow: var(--shadow-card), inset 0 0 0 1.5px color-mix(in srgb, var(--brass) 30%, transparent);
 }
 .helper-ic { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; background: var(--gold-soft); color: var(--gold); }
 .helper-ic svg { width: 24px; height: 24px; }
@@ -511,10 +520,10 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .item-row .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
 .plus {
   position: absolute; z-index: 2; inset-inline-start: 12px; top: 50%; translate: 0 -50%;
-  width: 34px; height: 34px; border-radius: 12px; display: grid; place-items: center; color: var(--brass-hi);
-  background: var(--harbor); box-shadow: inset 0 0 0 1px var(--line-strong); transition: background .25s, color .25s, transform .35s var(--ease-spring);
+  width: 34px; height: 34px; border-radius: 12px; display: grid; place-items: center; color: var(--on-brass);
+  background: var(--brass); box-shadow: 0 6px 14px -8px var(--brass); transition: background .25s, color .25s, transform .35s var(--ease-spring);
 }
-.plus:hover { background: var(--brass); color: var(--on-brass); }
+.plus:hover { background: var(--brass-hi); }
 .plus:active { transform: scale(.88); }
 .plus svg { width: 18px; height: 18px; stroke-width: 2.2; }
 .item-hit { position: absolute; inset: 0; border-radius: inherit; z-index: 1; }
@@ -709,7 +718,7 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .tabbar {
   position: absolute; z-index: 20; inset-inline: 12px; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 18px); height: 70px; /* تحته سطر إيلاف */
   display: grid; grid-template-columns: repeat(4, 1fr); align-items: center; padding: 0 6px; border-radius: 24px;
-  background: rgba(251, 246, 239, .93); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  background: color-mix(in srgb, var(--inset) 94%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 12px 30px -14px rgba(var(--tint), .5), inset 0 0 0 1px var(--line);
   transition: transform .45s var(--ease-out), opacity .3s;
 }
@@ -833,19 +842,40 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .cat-tile .art { background: radial-gradient(90% 80% at 25% 15%, hsl(var(--ch, 30) 55% 82% / .9), transparent 60%), linear-gradient(150deg, hsl(var(--ch, 30) 40% 64%), hsl(calc(var(--ch, 30) - 10) 38% 38%)); color: #fff8ef; }
 .cat-tile .art svg { filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .25)); }
 
-/* اختيار اليوم */
-.today-pick { position: relative; display: grid; min-height: 196px; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-deep); isolation: isolate; }
-.today-pick > .art { position: absolute; inset: 0; height: 100%; border-radius: 0; }
-.today-pick::after { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to top, rgba(20, 12, 8, .88) 8%, rgba(20, 12, 8, .35) 55%, transparent); pointer-events: none; }
-.today-pick .item-hit { position: absolute; inset: 0; z-index: 2; }
-.tp-info { position: relative; z-index: 3; align-self: end; display: grid; gap: 4px; padding: 16px; color: #fff8ef; pointer-events: none; }
-.tp-tag { justify-self: start; display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: rgba(255, 255, 255, .18); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-.tp-tag svg { width: 13px; height: 13px; color: #f6c76a; }
-.tp-info h3 { font-size: 22px; font-weight: 800; line-height: 1.3; }
-.tp-info p { font-size: 12.5px; opacity: .85; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.tp-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
-.tp-price { font-size: 18px; font-weight: 800; }
-.tp-add { pointer-events: auto; }
+/* ═════ الشريط المتحرك أول المنيو (الكاشير بيختار أصنافه) ═════ */
+.feat { display: grid; gap: 2px; margin-bottom: 2px; }
+.feat.is-off { display: none; }
+.feat-view { position: relative; overflow: hidden; border-radius: 24px; touch-action: pan-y; box-shadow: 0 18px 34px -20px var(--promo-b); isolation: isolate; }
+.feat-track { display: flex; transition: transform .6s var(--ease-out); will-change: transform; }
+.feat-slide { position: relative; flex: 0 0 100%; display: grid; grid-template-columns: minmax(0, 1fr) 44%; min-height: 184px; background: linear-gradient(135deg, var(--promo-a), var(--promo-b)); color: var(--promo-ink); }
+.feat-slide > .art { grid-column: 2; grid-row: 1; height: 100%; min-height: 184px; border-radius: 0; -webkit-mask-image: linear-gradient(to right, #000 62%, transparent); mask-image: linear-gradient(to right, #000 62%, transparent); }
+.feat-slide .item-hit { z-index: 1; }
+.fs-info { grid-column: 1; grid-row: 1; position: relative; z-index: 2; display: grid; align-content: center; gap: 4px; padding: 16px 16px 16px 4px; min-width: 0; pointer-events: none; }
+.fs-tag { justify-self: start; display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; background: var(--sale); color: var(--sale-ink); }
+.fs-tag svg { width: 14px; height: 14px; fill: currentColor; stroke: none; }
+.fs-tag b { font-weight: 800; opacity: .75; }
+.fs-info h3 { font-size: 21px; font-weight: 800; line-height: 1.3; }
+.fs-info p { font-size: 12.5px; opacity: .88; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fs-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 6px; }
+.fs-price { font-size: 18px; font-weight: 800; }
+.fs-price s { font-size: 13px; font-weight: 500; opacity: .7; }
+.fs-add { pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 13.5px; font-weight: 800; background: var(--promo-ink); color: var(--promo-a); box-shadow: 0 6px 16px -8px rgba(0, 0, 0, .5); transition: transform .3s var(--ease-spring); }
+.fs-add:active { transform: scale(.94); }
+.fs-add svg { width: 16px; height: 16px; stroke-width: 2.6; }
+.feat-dots { display: flex; justify-content: center; gap: 2px; }
+.feat-dots button { position: relative; width: 22px; height: 22px; display: grid; place-items: center; }
+.feat-dots button::before { content: ''; width: 7px; height: 7px; border-radius: 9px; background: var(--line-strong); transition: width .3s var(--ease-out), background .3s; }
+.feat-dots button[aria-current]::before { width: 26px; background: color-mix(in srgb, var(--brass) 25%, transparent); }
+/* شريط التقدّم جوا النقطة: قديش ضايل للصنف الجاي */
+.feat-dots button[aria-current]::after { content: ''; position: absolute; inset-inline-start: calc(50% - 13px); top: calc(50% - 3.5px); width: 26px; height: 7px; border-radius: 9px; background: var(--brass); transform-origin: right; animation: feat-fill var(--feat-dur, 4s) linear forwards; }
+.feat.is-paused .feat-dots button[aria-current]::after { animation-play-state: paused; }
+@keyframes feat-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .feat-track { transition: none; } .feat-dots button[aria-current]::after { animation: none; transform: none; } }
+
+/* شارة الخصم: لون قوي بيلفت النظر */
+.sale-tag { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 12px; font-size: 16px; font-weight: 800; background: var(--sale); color: var(--sale-ink); box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .55); rotate: -3deg; }
+.sale-tag svg, .badge-sale svg { width: 15px; height: 15px; }
+.badge-sale { background: var(--sale); color: var(--sale-ink); font-weight: 800; }
 
 /* ساعدنا نختارك + نديم جوا البطاقة (بدل الزر العائم فوقها) */
 .helper-card { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; padding: 10px 10px 10px 14px; }
@@ -935,14 +965,12 @@ body.has-cartbar .s-home, body.has-cartbar .s-category { padding-bottom: 260px; 
 [data-theme="dark"] .status-chip.preparing, [data-theme="dark"] .status-pill.preparing { background: rgba(217, 165, 82, .16); color: #ecc27e; }
 
 /* العروض */
-[data-theme="dark"] .offer { background: linear-gradient(150deg, #2c1b12, #22150e); box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(212, 163, 89, .25); }
-[data-theme="dark"] .offer-arts .art { box-shadow: 0 0 0 3px #2c1b12; }
 
 /* ───── صفحة الزبون ───── */
 [data-theme="dark"] .app-body { background: radial-gradient(80% 60% at 50% 0%, #26160d, transparent 70%), var(--abyss); }
 
 /* الأسعار والأيقونات النشطة بالغامق: ذهبي (بيبرز ومقروء) */
-[data-theme="dark"] .item-row .price b, [data-theme="dark"] .pop-card .price, [data-theme="dark"] .offer-price .num { color: var(--brass-hi); }
+[data-theme="dark"] .item-row .price b, [data-theme="dark"] .pop-card .price { color: var(--brass-hi); }
 /* زر نديم: الدلّة ذهبية، فخلفيته بني عشان تبيّن */
 [data-theme="dark"] .fab { background: #3a2417; box-shadow: 0 14px 28px -12px rgba(0, 0, 0, .9), inset 0 0 0 1px rgba(212, 163, 89, .35); }
 [data-theme="dark"] .fab::after { box-shadow: 0 0 0 2px #3a2417; }
@@ -1046,13 +1074,14 @@ body.has-cartbar .s-home, body.has-cartbar .s-category { padding-bottom: 260px; 
 [data-theme="dark"][data-biz="restaurant"] .btn-brass:hover { background: #f0936a; }
 [data-biz="restaurant"] .btn-ghost { box-shadow: inset 0 0 0 1.5px rgba(168, 72, 42, .45); }
 [data-theme="dark"][data-biz="restaurant"] .btn-ghost { box-shadow: inset 0 0 0 1.5px rgba(224, 120, 78, .5); }
-[data-biz="restaurant"] .offer { background: linear-gradient(150deg, #fbeee2, #f3e0cd); }
-[data-theme="dark"][data-biz="restaurant"] .offer { background: linear-gradient(150deg, #2c1d15, #21160f); }
 [data-theme="dark"][data-biz="restaurant"] .fab { background: #3a2016; }
 [data-biz="restaurant"] .side { background: linear-gradient(180deg, #8a3a20, #4a1d0e); }
 [data-theme="dark"][data-biz="restaurant"] .side { background: linear-gradient(180deg, #2c1b14, #1a100c); }
 [data-theme="dark"][data-biz="restaurant"] .tabbar button[aria-current="page"] { color: #a8482a; }
 [data-biz="restaurant"] [data-cafe-only] { display: none !important; }
+:root:not([data-biz="restaurant"]) [data-rest-only] { display: none !important; }
+/* بالغامق: العروض والشريط المتحرك أغمق شوي بلون المحل (مش أصفر فاقع) */
+[data-theme="dark"] { --promo-a: color-mix(in srgb, var(--brass) 46%, var(--tide)); --promo-b: color-mix(in srgb, var(--brass) 20%, var(--harbor)); --promo-ink: #fff8ef; }
 
 /* ─────────────────────────────────────────────
    ثيم الألوان اللي اختاره الكاشير (palette.js بيحط المتغيرات على :root[data-palette])
@@ -1062,8 +1091,6 @@ body.has-cartbar .s-home, body.has-cartbar .s-category { padding-bottom: 260px; 
 :root[data-palette] .side-brand .brand-mark-name { color: var(--side-ink); }
 :root[data-palette] .nav-btn[aria-current="page"] { background: var(--harbor); color: var(--brass-hi); }
 :root[data-palette][data-theme="dark"] .nav-btn[aria-current="page"] { background: color-mix(in srgb, var(--brass) 18%, transparent); color: var(--brass); }
-:root[data-palette] .offer, :root[data-palette][data-theme="dark"] .offer { background: linear-gradient(150deg, var(--offer-a), var(--offer-b)); box-shadow: var(--shadow-card), inset 0 0 0 1px var(--line); }
-:root[data-palette] .offer-arts .art, :root[data-palette][data-theme="dark"] .offer-arts .art { box-shadow: 0 0 0 3px var(--offer-a); }
 :root[data-palette] .fab, :root[data-palette][data-theme="dark"] .fab { background: var(--fab-bg); }
 :root[data-palette] .fab::after, :root[data-palette][data-theme="dark"] .fab::after { box-shadow: 0 0 0 2px var(--fab-bg); }
 :root[data-palette] .btn-brass:hover, :root[data-palette][data-theme="dark"] .btn-brass:hover { background: var(--brass-hi); }
@@ -1133,20 +1160,14 @@ body.has-cartbar .s-home, body.has-cartbar .s-category { padding-bottom: 260px; 
     <!-- 3. القائمة -->
     <section class="screen s-home" data-screen="home" aria-label="القائمة">
       <header class="appbar" data-appbar></header>
+      <!-- الشريط المتحرك: أول شي بيشوفه الزبون، والكاشير بيختار أصنافه -->
+      <section class="feat" id="featured" aria-roledescription="carousel" aria-label="اقتراحات المحل" hidden></section>
       <p class="greet" id="greet"></p>
       <label class="search"><span data-icon="search"></span><input class="search-input" id="homeSearch" type="search" placeholder="ابحث في المنيو…" aria-label="ابحث في المنيو"></label>
       <div id="homeResults" hidden></div>
       <div id="homeMain">
         <button class="track-banner" type="button" id="homeTrack" data-go="track" hidden></button>
-        <div id="todayPick"></div>
         <div class="cat-grid" id="catGrid"></div>
-        <div class="helper-card" data-cafe-only>
-          <button class="helper-main" type="button" data-go="helper">
-            <span class="helper-ic" data-icon="sparkle"></span>
-            <span><strong>ساعدنا نختارك</strong><small id="helperSub">ثلاث أسئلة ومنقترحلك</small></span>
-          </button>
-          <button class="helper-ask" type="button" data-open-chat><span id="helperAva"></span><span>اسأل نديم</span></button>
-        </div>
         <section class="block" id="popBlock">
           <header class="block-head"><h2>الأكثر طلباً</h2><span class="muted">هالأسبوعين</span></header>
           <div class="pop-row" id="popRow"></div>
@@ -1155,7 +1176,14 @@ body.has-cartbar .s-home, body.has-cartbar .s-category { padding-bottom: 260px; 
           <header class="block-head"><h2>العروض</h2><span class="muted">لفترة محدودة</span></header>
           <div class="offer-list" id="offerList"></div>
         </section>
-        <button class="barista-card" type="button" data-open-chat>
+        <div class="helper-card" data-cafe-only>
+          <button class="helper-main" type="button" data-go="helper">
+            <span class="helper-ic" data-icon="sparkle"></span>
+            <span><strong>ساعدنا نختارك</strong><small id="helperSub">ثلاث أسئلة ومنقترحلك</small></span>
+          </button>
+          <button class="helper-ask" type="button" data-open-chat><span id="helperAva"></span><span>اسأل نديم</span></button>
+        </div>
+        <button class="barista-card" type="button" data-open-chat data-rest-only>
           <span class="barista-ava" id="baristaAva"></span>
           <span><strong id="baristaTitle"></strong><small>بيشرحلك كل مشروب من شو بيتكوّن وبيقترح عليك</small></span>
           <span class="chev" data-icon="chev"></span>
@@ -2107,6 +2135,19 @@ function cleanLogo(v) {
   if (/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(x) && x.length < 450_000) return x;
   throw new HttpError(400, 'صورة الشعار مش مقبولة (PNG أو JPG أو WEBP، وحجم صغير).');
 }
+/**
+ * الشريط المتحرك أول صفحة الزبون: عنوان + أصناف بترتيب الكاشير + كم ثانية على كل صنف.
+ * بدون أصناف = الأكثر طلباً لحاله.
+ */
+function cleanFeatured(f) {
+  const known = new Set(db().items.map((i) => i.id));
+  const items = [...new Set((Array.isArray(f?.items) ? f.items : []).map((x) => String(x)))].filter((id) => known.has(id)).slice(0, 10);
+  return {
+    title: str(f?.title, 30) || 'الأكثر طلباً',
+    items,
+    seconds: Math.round(num(f?.seconds ?? 4, { min: 2, max: 10 })),
+  };
+}
 route('PUT', '/admin/settings', async ({ body: b = {} }) => {
   const s = db().settings;
   if (b.cafeName != null) s.cafeName = str(b.cafeName, 40) || s.cafeName;
@@ -2122,6 +2163,7 @@ route('PUT', '/admin/settings', async ({ body: b = {} }) => {
   if (b.theme != null) s.theme = cleanTheme(b.theme);
   if (b.logoIcon != null) s.logoIcon = cleanLogo(b.logoIcon); // بدل الدلّة/القدرة
   if (b.logoName != null) s.logoName = cleanLogo(b.logoName); // صورة بدل كتابة اسم المحل
+  if (b.featured != null) s.featured = cleanFeatured(b.featured);
   if (b.city != null) s.city = str(b.city, 40);
   if (b.lat != null && b.lat !== '') s.lat = num(b.lat, { min: -90, max: 90 });
   if (b.lon != null && b.lon !== '') s.lon = num(b.lon, { min: -180, max: 180 });
@@ -2145,6 +2187,7 @@ route('POST', '/admin/menu-template', ({ body }) => {
   d.items = t.items;
   d.offers = t.offers;
   d.settings.businessType = type;
+  if (d.settings.featured) d.settings.featured.items = []; // الأصناف القديمة راحت، فالشريط بيرجع للأكثر طلباً
   save();
   return { data: { ok: true, items: t.items.length, categories: t.categories.length }, events: [toAll('menu:changed')] };
 }, { admin: true });
@@ -3172,7 +3215,7 @@ function comboValue(offer) {
 
 // اللي بيوصل للزبون من إعدادات المحل: قائمة مسموحة بس (أي حقل جديد سري ما بيطلع بالغلط)
 const PUBLIC_SETTINGS = ['cafeName', 'brandWord', 'tagline', 'businessType', 'currency', 'currencyName', 'city', 'lat', 'lon',
-  'baristaName', 'wifi', 'hours', 'cafeNotes', 'theme', 'logoIcon', 'logoName'];
+  'baristaName', 'wifi', 'hours', 'cafeNotes', 'theme', 'logoIcon', 'logoName', 'featured'];
 function publicSettings() {
   const s = db().settings;
   return Object.fromEntries(PUBLIC_SETTINGS.filter((k) => s[k] !== undefined).map((k) => [k, s[k]]));
@@ -5506,7 +5549,7 @@ function itemRow(it) {
         <span class="badges">
           ${!it.available ? '<span class="badge badge-mute">مش متوفر حالياً</span>' : ''}
           ${it.available && it.left ? `<span class="badge badge-coral">باقي ${it.left} بس</span>` : ''}
-          ${it.was ? '<span class="badge badge-coral">عرض</span>' : ''}
+          ${it.was ? `<span class="badge badge-sale">${icon('tag')}عرض</span>` : ''}
           ${popular && it.available ? `<span class="badge badge-gold">${icon('star')}مطلوب</span>` : ''}
         </span>
       </div>
@@ -5649,20 +5692,7 @@ function renderHome() {
     ? `${weatherIcon(w)}<span>${greetingWord()} · ${esc(w.city)} ${w.temp}° ${esc(w.desc)}</span>`
     : `${icon('sun')}<span>${greetingWord()}، شو حابب اليوم؟</span>`;
   const cats = categories.filter((c) => items.some((i) => i.categoryId === c.id));
-  // اختيار اليوم: أكثر صنف بينطلب ومتوفر، بصورته الكبيرة وزر إضافة مباشر
-  const pick = popular.map(itemById).find((i) => i?.available) ?? items.find((i) => i.available);
-  $('#todayPick').innerHTML = pick ? `
-    <article class="today-pick" data-item="${esc(pick.id)}">
-      <button class="item-hit" type="button" data-open-item="${esc(pick.id)}" aria-label="${esc(pick.name)}، التفاصيل"></button>
-      ${artTile(pick, 'big')}
-      <div class="tp-info">
-        <span class="tp-tag">${icon('star')}اختيار اليوم</span>
-        <h3>${esc(pick.name)}</h3>
-        <p>${esc(pick.desc ?? '')}</p>
-        <div class="tp-foot"><span class="tp-price">${priceText(pick.price)}</span>
-          <button class="btn btn-brass btn-sm tp-add" type="button" data-quick-add="${esc(pick.id)}">${icon('plus')}أضف</button></div>
-      </div>
-    </article>` : '';
+  const featAuto = renderFeatured();
   const CAT_TINT = [28, 200, 340, 18, 140, 260, 45];
   $('#catGrid').innerHTML = cats.map((c, i) => `
     <button class="cat-tile ${cats.length % 2 === 1 && i === cats.length - 1 ? 'wide' : ''}" type="button" data-go="category" data-param="${esc(c.id)}" style="--ch:${CAT_TINT[i % CAT_TINT.length]}" data-reveal>
@@ -5670,7 +5700,7 @@ function renderHome() {
       <span class="cat-meta"><span><strong>${esc(c.name)}</strong>${c.en ? `<small>${esc(c.en)}</small>` : ''}</span><span class="chev">${icon('chev')}</span></span>
     </button>`).join('');
   const pops = popular.map(itemById).filter((i) => i?.available);
-  $('#popBlock').hidden = !pops.length;
+  $('#popBlock').hidden = !pops.length || featAuto; // الشريط فوق بيعرضهم أصلاً
   $('#popRow').innerHTML = pops.map((it, idx) => `
     <article class="pop-card" data-item="${esc(it.id)}">
       <button class="item-hit" type="button" data-open-item="${esc(it.id)}" aria-label="${esc(it.name)}"></button>
@@ -5684,14 +5714,14 @@ function renderHome() {
   $('#offerList').innerHTML = offers.map((o) => `
     <article class="offer" data-reveal>
       <div class="offer-top"><h3 class="offer-title">${esc(o.title)}</h3>
-        ${o.type === 'combo' ? `<div class="offer-arts">${o.itemIds.map(itemById).filter(Boolean).map((i) => artTile(i)).join('')}</div>` : `<span class="badge badge-coral">خصم ${o.percent}%</span>`}</div>
+        ${o.type === 'combo' ? `<div class="offer-arts">${o.itemIds.map(itemById).filter(Boolean).map((i) => artTile(i)).join('')}</div>` : `<span class="sale-tag">${icon('tag')}خصم ${o.percent}%</span>`}</div>
       <p class="offer-desc">${esc(o.description)}</p>
       <div class="offer-foot">
         ${o.type === 'combo'
           ? `<div class="offer-price"><span>${priceText(o.price)}</span>${o.value > o.price ? `<s>${priceText(o.value)}</s>` : ''}</div>
-             ${o.available ? `<button class="btn btn-brass btn-sm" type="button" data-add-offer="${esc(o.id)}">${icon('plus')}أضف العرض</button>` : '<span class="badge badge-mute">غير متوفر حالياً</span>'}`
+             ${o.available ? `<button class="btn btn-promo btn-sm" type="button" data-add-offer="${esc(o.id)}">${icon('plus')}أضف العرض</button>` : '<span class="badge badge-mute">غير متوفر حالياً</span>'}`
           : `<div class="offer-arts">${o.itemIds.map(itemById).filter(Boolean).map((i) => artTile(i)).join('')}</div>
-             <button class="btn btn-ghost btn-sm" type="button" data-open-item="${esc(o.itemIds[0])}">شوف الأصناف</button>`}
+             <button class="btn btn-promo-line btn-sm" type="button" data-open-item="${esc(o.itemIds[0])}">شوف الأصناف</button>`}
       </div>
     </article>`).join('');
   $('#baristaAva').innerHTML = dallahIcon();
@@ -5699,9 +5729,100 @@ function renderHome() {
   $('#baristaTitle').textContent = `اسأل ${S().baristaName}، ${W().hostSmart}`;
   doHomeSearch();
 }
+// ───────── الشريط المتحرك أول المنيو ─────────
+// أصناف بيختارها الكاشير (settings.featured)، وإذا ما اختار: الأكثر طلباً لحاله. كل صنف بيوقف ثواني وبيلف عالي بعده.
+const feat = { ids: '', i: 0, n: 0, ms: 4000, timer: null, paused: false };
+function featuredItems() {
+  const chosen = (S().featured?.items ?? []).map(itemById).filter((i) => i?.available);
+  if (chosen.length) return { list: chosen, auto: false };
+  const pops = state.menu.popular.map(itemById).filter((i) => i?.available);
+  return { list: (pops.length ? pops : state.menu.items.filter((i) => i.available)).slice(0, 6), auto: true };
+}
+/** بيرسم الشريط وبيرجّع true إذا هو تلقائي (الأكثر طلباً) */
+function renderFeatured() {
+  const box = $('#featured');
+  const { list, auto } = featuredItems();
+  const f = S().featured ?? {};
+  const title = f.title || 'الأكثر طلباً';
+  box.hidden = !list.length;
+  const ids = list.map((i) => i.id).join(',');
+  if (ids !== feat.ids) { feat.ids = ids; feat.i = 0; }
+  feat.n = list.length;
+  feat.ms = Math.min(10, Math.max(2, Number(f.seconds) || 4)) * 1000;
+  box.style.setProperty('--feat-dur', `${feat.ms}ms`);
+  box.innerHTML = `
+    <div class="feat-view"><div class="feat-track">${list.map((it, k) => `
+      <article class="feat-slide" data-item="${esc(it.id)}" aria-roledescription="slide" aria-label="${k + 1} من ${list.length}: ${esc(it.name)}">
+        <button class="item-hit" type="button" data-open-item="${esc(it.id)}" aria-label="${esc(it.name)}، التفاصيل"></button>
+        ${artTile(it, 'big')}
+        <div class="fs-info">
+          <span class="fs-tag">${icon(auto ? 'flame' : 'star')}${esc(title)}${auto && list.length > 1 ? ` <b>#${k + 1}</b>` : ''}</span>
+          <h3>${esc(it.name)}</h3>
+          <p>${esc(it.desc ?? '')}</p>
+          <div class="fs-foot"><span class="fs-price">${priceText(it.price)}${it.was ? ` <s>${priceText(it.was)}</s>` : ''}</span>
+            <button class="fs-add" type="button" data-quick-add="${esc(it.id)}">${icon('plus')}أضف</button></div>
+        </div>
+      </article>`).join('')}</div></div>
+    ${list.length > 1 ? `<div class="feat-dots">${list.map((it, k) => `<button type="button" data-feat="${k}" aria-label="${esc(it.name)}"></button>`).join('')}</div>` : ''}`;
+  featShow(feat.i);
+  featStart();
+  return auto;
+}
+function featShow(i) {
+  const box = $('#featured');
+  const track = box.querySelector('.feat-track');
+  if (!track || !feat.n) return;
+  feat.i = ((i % feat.n) + feat.n) % feat.n;
+  const rtl = getComputedStyle(box).direction === 'rtl'; // بالعربي الصنف الجاي على اليسار
+  track.style.transform = `translateX(${(rtl ? 1 : -1) * feat.i * 100}%)`;
+  box.querySelectorAll('.feat-slide').forEach((el, k) => { el.inert = k !== feat.i; });
+  box.querySelectorAll('[data-feat]').forEach((el) => el.removeAttribute('aria-current'));
+  const dot = box.querySelector(`[data-feat="${feat.i}"]`);
+  if (dot) { void dot.offsetWidth; dot.setAttribute('aria-current', 'true'); } // شريط التقدّم بيبلّش من جديد
+}
+function featStart() {
+  clearInterval(feat.timer);
+  if (feat.n < 2) return;
+  feat.timer = setInterval(() => {
+    if (feat.paused || document.hidden || current?.dataset.screen !== 'home' || $('#featured').hidden) return;
+    featShow(feat.i + 1);
+  }, feat.ms);
+}
+/** السحب باليد (يمين/يسار) والنقاط، والشريط بيوقف وانت ماسكه */
+function bindFeatured() {
+  const box = $('#featured');
+  let x0 = null, y0 = 0, swiped = false;
+  const pause = (on) => { feat.paused = on; box.classList.toggle('is-paused', on); };
+  box.addEventListener('pointerdown', (e) => {
+    if (!e.target.closest('.feat-view')) return;
+    x0 = e.clientX; y0 = e.clientY; swiped = false; pause(true);
+  });
+  const end = (e) => {
+    if (x0 == null) return;
+    const dx = e.clientX - x0, dy = e.clientY - y0;
+    x0 = null; pause(false);
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+      swiped = true;
+      const rtl = getComputedStyle(box).direction === 'rtl';
+      featShow(feat.i + ((dx > 0) === rtl ? 1 : -1));
+    } else featShow(feat.i);
+    featStart();
+  };
+  box.addEventListener('pointerup', end);
+  box.addEventListener('pointercancel', end);
+  box.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') pause(true); });
+  box.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse' && x0 == null) { pause(false); featShow(feat.i); featStart(); } });
+  box.addEventListener('click', (e) => {
+    if (swiped) { swiped = false; e.preventDefault(); e.stopPropagation(); return; } // السحب مش كبسة على الصنف
+    const dot = e.target.closest('[data-feat]');
+    if (dot) { featShow(Number(dot.dataset.feat)); featStart(); }
+  }, true);
+}
+
 function doHomeSearch() {
   const q = $('#homeSearch').value.trim();
   $('#homeMain').hidden = !!q;
+  $('#featured').classList.toggle('is-off', !!q);
   $('#homeResults').hidden = !q;
   if (!q) return;
   const list = state.menu.items.filter((i) => i.name.includes(q) || i.desc.includes(q) || (i.tags ?? []).some((t) => t.includes(q)));
@@ -6547,6 +6668,7 @@ async function boot() {
   $('#chatWaiter').innerHTML = `${icon('bell')}نادِ نادل إنسان`;
   saveCart();
   bind();
+  bindFeatured();
   connectLive();
   window.__CAFE_DEMO__?.link?.onChange(renderLink);
   renderPending();
@@ -7264,6 +7386,15 @@ function fit(h, s, l, against, min, dir) {
   return c;
 }
 
+/**
+ * ألوان الأساس ثابتة بكل المحلات (الخلفية، البطاقات، الكتابة) عشان الكلام يضل واضح،
+ * ولون المحل بيطلع مليان على الهوية بس: الأزرار، الشريط المتحرك، العروض، الشريط المختار.
+ */
+const NEUTRAL = {
+  light: { abyss: '#e7e4de', harbor: '#f4f2ee', line: '#e4e0d9', lineStrong: '#d2cdc4', inset: '#faf9f7', foam: '#1c1a17', foam2: '#565049', foam3: '#78726a' },
+  dark: { abyss: '#0a0908', harbor: '#121110', tide: '#1c1a18', swell: '#252320', line: '#2e2b28', lineStrong: '#3a3632', inset: '#171513', foam: '#f3f0ec', foam2: '#b8b1a8', foam3: '#8e877e' },
+};
+
 /** كل متغيرات الواجهة من لون واحد: { light: {...}, dark: {...} } */
 function paletteFrom(color, accent = null) {
   const [h0, s0, l0] = rgbToHsl(hexToRgb(color));
@@ -7273,22 +7404,22 @@ function paletteFrom(color, accent = null) {
   const st = grey ? Math.min(sa, 0.35) * 0.5 : Math.min(s0, 0.6); // تشبّع الخلفيات (هادي)
 
   // ── الفاتح ──
-  const harbor = hsl(h, st * 0.45, 0.95);
-  const foam = hsl(h, st * 0.55, 0.12);
+  const N = NEUTRAL.light;
+  const harbor = N.harbor;
   const brass = fit(h0, s0, Math.min(l0, 0.5), '#ffffff', 4.8, -1);
   const [bh, bs, bl] = rgbToHsl(hexToRgb(brass));
   const light = {
-    '--abyss': hsl(h, st * 0.45, 0.89),
+    '--abyss': N.abyss,
     '--harbor': harbor,
     '--tide': '#ffffff',
     '--swell': '#ffffff',
-    '--tint': rgbList(foam),
-    '--line': hsl(h, st * 0.3, 0.88),
-    '--line-strong': hsl(h, st * 0.3, 0.8),
-    '--inset': hsl(h, st * 0.3, 0.975),
-    '--foam': foam,
-    '--foam-2': fit(h, st * 0.3, 0.42, harbor, 4.8, -1),
-    '--foam-3': hsl(h, st * 0.25, 0.55),
+    '--tint': rgbList(N.foam),
+    '--line': N.line,
+    '--line-strong': N.lineStrong,
+    '--inset': N.inset,
+    '--foam': N.foam,
+    '--foam-2': N.foam2,
+    '--foam-3': N.foam3,
     '--brass': brass,
     '--brass-hi': fit(bh, bs, bl - 0.08, harbor, 6, -1),
     '--brass-lo': hsl(bh, bs * 0.45, 0.72),
@@ -7306,24 +7437,25 @@ function paletteFrom(color, accent = null) {
   };
 
   // ── الغامق ──
-  const dHarbor = hsl(h, st * 0.5, 0.07);
+  const D = NEUTRAL.dark;
+  const dHarbor = D.harbor;
   const dBrassBase = grey && accent ? accent : color;
   const [dh, ds, dl] = rgbToHsl(hexToRgb(dBrassBase));
   const dSat = grey && !accent ? 0 : Math.max(ds, 0.35); // رمادي بدون لمسة: بيضل رمادي
   const dBrass = fit(dh, dSat, Math.max(dl, 0.5), dHarbor, 6, 1);
-  const dFoam = hsl(h, st * 0.3, 0.93);
+  const dFoam = D.foam;
   const dark = {
-    '--abyss': hsl(h, st * 0.5, 0.04),
+    '--abyss': D.abyss,
     '--harbor': dHarbor,
-    '--tide': hsl(h, st * 0.45, 0.11),
-    '--swell': hsl(h, st * 0.45, 0.14),
+    '--tide': D.tide,
+    '--swell': D.swell,
     '--tint': rgbList(dFoam),
-    '--line': hsl(h, st * 0.35, 0.18),
-    '--line-strong': hsl(h, st * 0.35, 0.24),
-    '--inset': hsl(h, st * 0.45, 0.09),
+    '--line': D.line,
+    '--line-strong': D.lineStrong,
+    '--inset': D.inset,
     '--foam': dFoam,
-    '--foam-2': fit(h, st * 0.2, 0.66, hsl(h, st * 0.45, 0.11), 5, 1),
-    '--foam-3': hsl(h, st * 0.18, 0.55),
+    '--foam-2': D.foam2,
+    '--foam-3': D.foam3,
     '--brass': dBrass,
     '--brass-hi': fit(dh, dSat, rgbToHsl(hexToRgb(dBrass))[2] + 0.07, dHarbor, 7, 1),
     '--brass-lo': hsl(dh, ds * 0.45, 0.35),

@@ -23,6 +23,9 @@
    بيج دافي + بني قهوة + نحاس الدلّة (ستايل تطبيق جوال)
    ───────────────────────────────────────────── */
 :root {
+  /* العروض والشريط المتحرك: بلون المحل الأساسي (مليان مش باهت)، وشارة الخصم أصفر ملفت */
+  --promo-a: var(--brass); --promo-b: color-mix(in srgb, var(--brass) 72%, #000); --promo-ink: var(--on-brass);
+  --sale: #ffd23f; --sale-ink: #3a2500;
   --abyss: #e9dfd1;      /* الخلفية الخارجية حول التطبيق */
   --harbor: #f4ece1;     /* سطح التطبيق: بيج دافي */
   --tide: #ffffff;       /* البطاقات: أبيض نقي بيبرز الأصناف */
@@ -304,19 +307,25 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 /* بطاقات العروض */
 .offer {
   position: relative; overflow: hidden; border-radius: var(--r-lg); padding: 18px; display: grid; gap: 10px;
-  background: linear-gradient(150deg, #f3ead9, #ece0c9); box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(168, 131, 79, .3);
+  background: linear-gradient(150deg, var(--promo-a), var(--promo-b)); color: var(--promo-ink); box-shadow: 0 16px 30px -20px var(--promo-b);
 }
 .offer-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.offer-title { font-size: 19px; font-weight: 700; line-height: 1.3; color: var(--brass-hi); }
-.offer-desc { color: var(--foam-2); font-size: 13.5px; }
+.offer-title { font-size: 20px; font-weight: 800; line-height: 1.3; }
+.offer-desc { font-size: 13.5px; opacity: .9; }
 .offer-arts { display: flex; }
-.offer-arts .art { width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 0 0 3px #f1e7d4; }
+.offer-arts .art { width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 0 0 3px var(--promo-a); }
 .offer-arts .art + .art { margin-inline-start: -12px; }
 .offer-arts .art svg { width: 58%; height: 58%; }
 .offer-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .offer-price { display: flex; align-items: baseline; gap: 8px; font-weight: 700; }
 .offer-price .num { font-size: 22px; }
-.offer-price s { color: var(--foam-3); font-weight: 400; font-size: 13px; }
+.offer-price s { opacity: .7; font-weight: 400; font-size: 13px; }
+/* أزرار جوا بطاقة العرض الملوّنة: أبيض على لون المحل */
+.btn-promo { background: var(--promo-ink); color: var(--promo-a); box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .55); }
+.btn-promo:hover { filter: brightness(.96); }
+.btn-promo-line { background: transparent; color: var(--promo-ink); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--promo-ink) 65%, transparent); }
+.btn-promo-line:hover { background: rgba(255, 255, 255, .1); }
+.offer .badge-mute { background: rgba(255, 255, 255, .18); color: var(--promo-ink); }
 
 /* زخرفة الأوراق في الزوايا */
 .leaves { position: absolute; pointer-events: none; color: var(--gold); opacity: .32; width: 150px; }
@@ -520,14 +529,12 @@ body.pf { background: var(--harbor); min-height: 100dvh; }
 [data-theme="dark"] .status-chip.preparing, [data-theme="dark"] .status-pill.preparing { background: rgba(217, 165, 82, .16); color: #ecc27e; }
 
 /* العروض */
-[data-theme="dark"] .offer { background: linear-gradient(150deg, #2c1b12, #22150e); box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(212, 163, 89, .25); }
-[data-theme="dark"] .offer-arts .art { box-shadow: 0 0 0 3px #2c1b12; }
 
 /* ───── صفحة الزبون ───── */
 [data-theme="dark"] .app-body { background: radial-gradient(80% 60% at 50% 0%, #26160d, transparent 70%), var(--abyss); }
 
 /* الأسعار والأيقونات النشطة بالغامق: ذهبي (بيبرز ومقروء) */
-[data-theme="dark"] .item-row .price b, [data-theme="dark"] .pop-card .price, [data-theme="dark"] .offer-price .num { color: var(--brass-hi); }
+[data-theme="dark"] .item-row .price b, [data-theme="dark"] .pop-card .price { color: var(--brass-hi); }
 /* زر نديم: الدلّة ذهبية، فخلفيته بني عشان تبيّن */
 [data-theme="dark"] .fab { background: #3a2417; box-shadow: 0 14px 28px -12px rgba(0, 0, 0, .9), inset 0 0 0 1px rgba(212, 163, 89, .35); }
 [data-theme="dark"] .fab::after { box-shadow: 0 0 0 2px #3a2417; }
@@ -631,13 +638,14 @@ body.pf { background: var(--harbor); min-height: 100dvh; }
 [data-theme="dark"][data-biz="restaurant"] .btn-brass:hover { background: #f0936a; }
 [data-biz="restaurant"] .btn-ghost { box-shadow: inset 0 0 0 1.5px rgba(168, 72, 42, .45); }
 [data-theme="dark"][data-biz="restaurant"] .btn-ghost { box-shadow: inset 0 0 0 1.5px rgba(224, 120, 78, .5); }
-[data-biz="restaurant"] .offer { background: linear-gradient(150deg, #fbeee2, #f3e0cd); }
-[data-theme="dark"][data-biz="restaurant"] .offer { background: linear-gradient(150deg, #2c1d15, #21160f); }
 [data-theme="dark"][data-biz="restaurant"] .fab { background: #3a2016; }
 [data-biz="restaurant"] .side { background: linear-gradient(180deg, #8a3a20, #4a1d0e); }
 [data-theme="dark"][data-biz="restaurant"] .side { background: linear-gradient(180deg, #2c1b14, #1a100c); }
 [data-theme="dark"][data-biz="restaurant"] .tabbar button[aria-current="page"] { color: #a8482a; }
 [data-biz="restaurant"] [data-cafe-only] { display: none !important; }
+:root:not([data-biz="restaurant"]) [data-rest-only] { display: none !important; }
+/* بالغامق: العروض والشريط المتحرك أغمق شوي بلون المحل (مش أصفر فاقع) */
+[data-theme="dark"] { --promo-a: color-mix(in srgb, var(--brass) 46%, var(--tide)); --promo-b: color-mix(in srgb, var(--brass) 20%, var(--harbor)); --promo-ink: #fff8ef; }
 
 /* ─────────────────────────────────────────────
    ثيم الألوان اللي اختاره الكاشير (palette.js بيحط المتغيرات على :root[data-palette])
@@ -647,8 +655,6 @@ body.pf { background: var(--harbor); min-height: 100dvh; }
 :root[data-palette] .side-brand .brand-mark-name { color: var(--side-ink); }
 :root[data-palette] .nav-btn[aria-current="page"] { background: var(--harbor); color: var(--brass-hi); }
 :root[data-palette][data-theme="dark"] .nav-btn[aria-current="page"] { background: color-mix(in srgb, var(--brass) 18%, transparent); color: var(--brass); }
-:root[data-palette] .offer, :root[data-palette][data-theme="dark"] .offer { background: linear-gradient(150deg, var(--offer-a), var(--offer-b)); box-shadow: var(--shadow-card), inset 0 0 0 1px var(--line); }
-:root[data-palette] .offer-arts .art, :root[data-palette][data-theme="dark"] .offer-arts .art { box-shadow: 0 0 0 3px var(--offer-a); }
 :root[data-palette] .fab, :root[data-palette][data-theme="dark"] .fab { background: var(--fab-bg); }
 :root[data-palette] .fab::after, :root[data-palette][data-theme="dark"] .fab::after { box-shadow: 0 0 0 2px var(--fab-bg); }
 :root[data-palette] .btn-brass:hover, :root[data-palette][data-theme="dark"] .btn-brass:hover { background: var(--brass-hi); }
@@ -2509,6 +2515,19 @@ function cleanLogo(v) {
   if (/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(x) && x.length < 450_000) return x;
   throw new HttpError(400, 'صورة الشعار مش مقبولة (PNG أو JPG أو WEBP، وحجم صغير).');
 }
+/**
+ * الشريط المتحرك أول صفحة الزبون: عنوان + أصناف بترتيب الكاشير + كم ثانية على كل صنف.
+ * بدون أصناف = الأكثر طلباً لحاله.
+ */
+function cleanFeatured(f) {
+  const known = new Set(db().items.map((i) => i.id));
+  const items = [...new Set((Array.isArray(f?.items) ? f.items : []).map((x) => String(x)))].filter((id) => known.has(id)).slice(0, 10);
+  return {
+    title: str(f?.title, 30) || 'الأكثر طلباً',
+    items,
+    seconds: Math.round(num(f?.seconds ?? 4, { min: 2, max: 10 })),
+  };
+}
 route('PUT', '/admin/settings', async ({ body: b = {} }) => {
   const s = db().settings;
   if (b.cafeName != null) s.cafeName = str(b.cafeName, 40) || s.cafeName;
@@ -2524,6 +2543,7 @@ route('PUT', '/admin/settings', async ({ body: b = {} }) => {
   if (b.theme != null) s.theme = cleanTheme(b.theme);
   if (b.logoIcon != null) s.logoIcon = cleanLogo(b.logoIcon); // بدل الدلّة/القدرة
   if (b.logoName != null) s.logoName = cleanLogo(b.logoName); // صورة بدل كتابة اسم المحل
+  if (b.featured != null) s.featured = cleanFeatured(b.featured);
   if (b.city != null) s.city = str(b.city, 40);
   if (b.lat != null && b.lat !== '') s.lat = num(b.lat, { min: -90, max: 90 });
   if (b.lon != null && b.lon !== '') s.lon = num(b.lon, { min: -180, max: 180 });
@@ -2547,6 +2567,7 @@ route('POST', '/admin/menu-template', ({ body }) => {
   d.items = t.items;
   d.offers = t.offers;
   d.settings.businessType = type;
+  if (d.settings.featured) d.settings.featured.items = []; // الأصناف القديمة راحت، فالشريط بيرجع للأكثر طلباً
   save();
   return { data: { ok: true, items: t.items.length, categories: t.categories.length }, events: [toAll('menu:changed')] };
 }, { admin: true });
@@ -2629,7 +2650,7 @@ function comboValue(offer) {
 
 // اللي بيوصل للزبون من إعدادات المحل: قائمة مسموحة بس (أي حقل جديد سري ما بيطلع بالغلط)
 const PUBLIC_SETTINGS = ['cafeName', 'brandWord', 'tagline', 'businessType', 'currency', 'currencyName', 'city', 'lat', 'lon',
-  'baristaName', 'wifi', 'hours', 'cafeNotes', 'theme', 'logoIcon', 'logoName'];
+  'baristaName', 'wifi', 'hours', 'cafeNotes', 'theme', 'logoIcon', 'logoName', 'featured'];
 function publicSettings() {
   const s = db().settings;
   return Object.fromEntries(PUBLIC_SETTINGS.filter((k) => s[k] !== undefined).map((k) => [k, s[k]]));
