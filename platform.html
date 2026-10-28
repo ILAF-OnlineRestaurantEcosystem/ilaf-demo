@@ -208,6 +208,16 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 
+/* ألوان حالات الطلب: كل لون إله معنى واحد بكل مكان (الكاشير والزبون)
+   برتقالي جديد · أزرق تحضير · أخضر جاهز · بني تم التقديم · أحمر نداء */
+:root {
+  --st-new: #d97a14; --st-new-bg: #fdf0dc; --st-new-ink: #8a4a06;
+  --st-prep: #2f6fbf; --st-prep-bg: #e4eefb; --st-prep-ink: #1d4a85;
+  --st-ready: #23895a; --st-ready-bg: #def2e7; --st-ready-ink: #17623f;
+  --st-served: #8a6d55; --st-served-bg: #efe6dc; --st-served-ink: #5a4433;
+  --st-call: #cf3d2e; --st-call-bg: #fde4e0; --st-call-ink: #9c2418;
+}
+
 </style>
   <style>
 /* ───────── عناصر الهوية المشتركة بين صفحة الزبون ولوحة الكاشير ───────── */
@@ -647,6 +657,15 @@ body.pf { background: var(--harbor); min-height: 100dvh; }
 :root[data-palette][data-theme="dark"] .tabbar button[aria-current="page"]::before { background: var(--gold); }
 :root[data-palette][data-theme="dark"] .search:focus-within { box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .8), inset 0 0 0 1.5px var(--gold); }
 
+/* حالات الطلب بالغامق */
+[data-theme="dark"] {
+  --st-new: #f0a043; --st-new-bg: #3a2810; --st-new-ink: #f7c98a;
+  --st-prep: #5d9be8; --st-prep-bg: #142740; --st-prep-ink: #a9cbf5;
+  --st-ready: #43c085; --st-ready-bg: #10301f; --st-ready-ink: #94dcb6;
+  --st-served: #b49478; --st-served-bg: #2a2019; --st-served-ink: #dcc6b2;
+  --st-call: #f0675a; --st-call-bg: #3d1915; --st-call-ink: #f7aaa1;
+}
+
 </style>
 </head>
 <body class="pf">
@@ -785,6 +804,7 @@ __def("server/platform.js", function (__e) {
 // نفس الملف بيشتغل بنسخة الموقع الثابت داخل المتصفح (التخزين هناك standalone/demo-registry.js)
 const { withTenant, db, save, createTenantData, DEFAULT_TENANT } = __req("standalone/db-browser.js");
 const { readRegistry, writeRegistry, hashPassword, samePassword, randomHex, newId } = __req("standalone/demo-registry.js");
+const { setPin, randomPin, safeEqual } = __req("server/pin.js");
 const { buildSeed } = __req("server/seed.js");
 const { registerToken, randomToken, dropSessions } = __req("server/core.js");
 const { HttpError, monthKey, OPEN_STATUSES } = __req("server/logic.js");
@@ -797,7 +817,8 @@ let reg = null;
 const now = () => new Date().toISOString();
 const str = (v, max = 200) => String(v ?? '').trim().slice(0, max);
 const write = () => writeRegistry(reg);
-const setupCode = () => randomHex(4).toUpperCase().replace(/(.{4})/, '$1-');
+// رمز الإعداد لأول حساب: 16 خانة عشوائية (ما بينخمّن)
+const setupCode = () => randomHex(8).toUpperCase().replace(/(.{4})(?=.)/g, '$1-');
 
 function registry() {
   if (reg) return reg;
@@ -812,7 +833,8 @@ function registry() {
     };
   }
   // ما في ولا حساب: رمز إعداد بيطلع بشاشة السيرفر بس (عشان ما حدا غريب ياخد المنصة)
-  if (!reg.users.length && !reg.setupKey) reg.setupKey = setupCode();
+  // رمز إعداد قديم قصير (قبل التحديث) بيتبدّل بواحد أطول
+  if (!reg.users.length && (!reg.setupKey || reg.setupKey.length < 19)) reg.setupKey = setupCode();
   write();
   return reg;
 }
@@ -853,7 +875,7 @@ function validUser(body) {
   if (!/^[a-z0-9_.-]{3,24}$/.test(username)) throw new HttpError(400, 'اسم المستخدم (ID) بالإنجليزي من 3 لـ 24 حرف، مثلاً mohammed.');
   const name = str(body?.name, 40) || username;
   const password = String(body?.password ?? '');
-  if (password.length < 6) throw new HttpError(400, 'كلمة السر لازم تكون 6 أحرف أو أكثر.');
+  if (password.length < 8) throw new HttpError(400, 'كلمة السر لازم تكون 8 أحرف أو أكثر.');
   if (registry().users.some((u) => u.username === username)) throw new HttpError(409, 'اسم المستخدم هاد موجود.');
   return { username, name, password };
 }
@@ -895,10 +917,10 @@ function withStats(t) {
   return { ...t, typeLabel: TYPES[t.type] ?? t.type, stats };
 }
 
-function setTenantPin(id, pin) {
+async function setTenantPin(id, pin) {
   const p = str(pin, 8);
   if (!/^\d{4,8}$/.test(p)) throw new HttpError(400, 'رمز لوحة الكاشير لازم يكون من 4 لـ 8 أرقام.');
-  withTenant(id, () => { db().settings.adminPin = p; save(); });
+  await withTenant(id, async () => { await setPin(db().settings, p); save(); }); // مشفّر، مش نص عادي
 }
 
 // ───────── المسارات ─────────
@@ -913,15 +935,29 @@ route('GET', '/info', () => ({ name: PLATFORM_NAME, needsSetup: registry().users
 route('POST', '/setup', ({ body }) => {
   const r = registry();
   if (r.users.length) throw new HttpError(409, 'المنصة متجهّزة من قبل، سجّل دخول.');
-  if (str(body?.key, 20).toUpperCase() !== r.setupKey) throw new HttpError(403, 'رمز الإعداد غلط. بتلاقيه بشاشة السيرفر لما يشتغل.');
+  if (!r.setupKey || !safeEqual(str(body?.key, 40).toUpperCase(), r.setupKey)) throw new HttpError(403, 'رمز الإعداد غلط. بتلاقيه بشاشة السيرفر لما يشتغل.');
   const user = addUser(validUser(body), 'setup');
   delete r.setupKey;
   write();
   return { token: startSession(user), user: publicUser(user) };
 }, { auth: false });
-route('POST', '/login', ({ body }) => {
-  const user = registry().users.find((u) => u.username === str(body?.username, 24).toLowerCase());
-  if (!user || !checkPassword(user, body?.password ?? '')) throw new HttpError(401, 'اسم المستخدم أو كلمة السر غلط.');
+// محاولات الدخول الغلط للمنصة: 5 غلطات لنفس الحساب من نفس العنوان = قفل 15 دقيقة
+const loginFails = new Map();
+const DUMMY = hashPassword('not-a-real-password'); // عشان وقت الرد ما يكشف إذا اسم المستخدم موجود
+route('POST', '/login', ({ body, client }) => {
+  const username = str(body?.username, 24).toLowerCase();
+  const key = `${username}|${client ?? 'local'}`;
+  const f = loginFails.get(key);
+  if (f?.until > Date.now()) throw new HttpError(429, `محاولات غلط كثيرة. جرّب بعد ${Math.ceil((f.until - Date.now()) / 60_000)} دقيقة.`);
+  const user = registry().users.find((u) => u.username === username);
+  const okPass = checkPassword(user ?? DUMMY, body?.password ?? '');
+  if (!user || !okPass) {
+    const n = (f?.until > Date.now() ? 0 : f?.n ?? 0) + 1;
+    loginFails.set(key, n >= 5 ? { n: 0, until: Date.now() + 15 * 60_000 } : { n, until: 0 });
+    if (n >= 5) console.warn(`⚠️  5 محاولات دخول غلط على المنصة (${key}) — انسكّر 15 دقيقة`);
+    throw new HttpError(401, 'اسم المستخدم أو كلمة السر غلط.');
+  }
+  loginFails.delete(key);
   return { token: startSession(user), user: publicUser(user) };
 }, { auth: false });
 route('POST', '/logout', ({ token }) => { sessions.delete(token); return { ok: true }; });
@@ -929,16 +965,16 @@ route('GET', '/me', ({ user }) => publicUser(user));
 
 // المحلات
 route('GET', '/tenants', () => registry().tenants.map(withStats));
-route('POST', '/tenants', ({ body, user }) => {
+route('POST', '/tenants', async ({ body, user }) => {
   const r = registry();
   const name = str(body?.name, 40);
   if (!name) throw new HttpError(400, 'اكتب اسم المحل.');
   const type = body?.type === 'restaurant' ? 'restaurant' : 'cafe';
-  const pin = str(body?.pin, 8) || String(Math.floor(1000 + Math.random() * 9000));
+  const pin = str(body?.pin, 8) || randomPin(6); // رمز عشوائي آمن من 6 أرقام
   if (!/^\d{4,8}$/.test(pin)) throw new HttpError(400, 'رمز لوحة الكاشير لازم يكون من 4 لـ 8 أرقام.');
   const id = String(r.nextId++);
   createTenantData(id, buildSeed({ type, name, demo: body?.demo === true }));
-  setTenantPin(id, pin);
+  await setTenantPin(id, pin);
   const tenant = { id, name, type, ownerName: str(body?.ownerName, 40), ownerPhone: str(body?.ownerPhone, 20), status: 'active', notes: str(body?.notes, 300), createdAt: now(), createdBy: user.username };
   r.tenants.push(tenant);
   write();
@@ -979,9 +1015,9 @@ route('POST', '/tenants/:id/unfreeze', ({ p, user }) => {
   write();
   return withStats(t);
 });
-route('POST', '/tenants/:id/pin', ({ p, body }) => {
+route('POST', '/tenants/:id/pin', async ({ p, body }) => {
   if (!tenantInfo(p.id)) throw new HttpError(404, 'المحل مش موجود.');
-  setTenantPin(p.id, body?.pin);
+  await setTenantPin(p.id, body?.pin);
   return { ok: true };
 });
 // "افتح لوحة الكاشير" من المنصة بدون رمز المحل
@@ -1003,16 +1039,18 @@ route('DELETE', '/users/:id', ({ p, user }) => {
   write();
   return { ok: true };
 });
-route('POST', '/me/password', ({ body, user }) => {
+route('POST', '/me/password', ({ body, user, token }) => {
   if (!checkPassword(user, body?.current ?? '')) throw new HttpError(401, 'كلمة السر الحالية غلط.');
-  if (String(body?.next ?? '').length < 6) throw new HttpError(400, 'كلمة السر الجديدة لازم تكون 6 أحرف أو أكثر.');
+  if (String(body?.next ?? '').length < 8) throw new HttpError(400, 'كلمة السر الجديدة لازم تكون 8 أحرف أو أكثر.');
   Object.assign(user, hashPassword(body.next));
   write();
+  // كلمة السر تغيّرت: كل الأجهزة الثانية الداخلة بهالحساب بتطلع
+  for (const [t, sess] of sessions) if (sess.userId === user.id && t !== token) sessions.delete(t);
   return { ok: true };
 });
 
 /** ينفّذ طلب على API المنصة ويرجع { status, data } */
-async function platformHandle(method, fullPath, body, { token = null } = {}) {
+async function platformHandle(method, fullPath, body, { token = null, client = null } = {}) {
   const pathOnly = String(fullPath).split('?')[0];
   for (const r of routes) {
     if (r.method !== method) continue;
@@ -1022,7 +1060,7 @@ async function platformHandle(method, fullPath, body, { token = null } = {}) {
     try {
       const user = sessionUser(token);
       if (r.auth && !user) throw new HttpError(401, 'سجّل دخول للمنصة.');
-      const out = await r.fn({ p, body, token, user });
+      const out = await r.fn({ p, body, token, user, client });
       return out && typeof out === 'object' && 'data' in out && 'status' in out ? out : { status: 200, data: out };
     } catch (err) {
       if (err instanceof HttpError) return { status: err.status, data: { error: err.message } };
@@ -1126,8 +1164,11 @@ function createTenantData(id, state) {
   writeNow(norm(id));
   return state;
 }
+// معرّف فريد: وقت + 12 حرف عشوائي آمن (رقم الطلب برابط المتابعة ما بينخمّن)
 function uid(prefix = '') {
-  return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const abc = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const rnd = [...globalThis.crypto.getRandomValues(new Uint8Array(12))].map((x) => abc[x % 36]).join('');
+  return prefix + Date.now().toString(36) + rnd;
 }
 
 Object.assign(__e, { DB_KEY, DEFAULT_TENANT, keyOf, setTenant, currentTenant, dbKey, withTenant, tenantExists, load, db, save, flush, reset, reloadFromStorage, replaceAll, createTenantData, uid });
@@ -1978,6 +2019,61 @@ function writeRegistry(reg) {
 Object.assign(__e, { DB_KEY, REG_KEY, DEMO, DEMO_LOGIN, randomHex, newId, hashPassword, samePassword, readRegistry, writeRegistry });
 });
 
+__def("server/pin.js", function (__e) {
+'use strict';
+// رمز دخول الكاشير: بينحفظ مشفّر (PBKDF2-SHA256 مع salt عشوائي) مش نص عادي.
+// Web Crypto موجودة بـ Node 20+ وبالمتصفح، فنفس الكود بيشتغل بالسيرفر وبنسخة الموقع.
+const enc = new TextEncoder();
+const ITERATIONS = 120_000;
+const DEFAULT_PIN = '1234';
+const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+const fromHex = (h) => new Uint8Array(String(h).match(/../g)?.map((x) => parseInt(x, 16)) ?? []);
+
+/** مقارنة بوقت ثابت (ما بتكشف من وين بيختلف النصين) */
+function safeEqual(a, b) {
+  a = String(a); b = String(b);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return diff === 0;
+}
+
+async function hashPin(pin, saltHex = null) {
+  const salt = saltHex ? fromHex(saltHex) : globalThis.crypto.getRandomValues(new Uint8Array(16));
+  const key = await globalThis.crypto.subtle.importKey('raw', enc.encode(String(pin)), 'PBKDF2', false, ['deriveBits']);
+  const bits = await globalThis.crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: ITERATIONS }, key, 256);
+  return { pinSalt: hex(salt), pinHash: hex(bits) };
+}
+
+/** هل الرمز صح؟ (بيقبل كمان الرمز القديم المحفوظ نص عادي، عشان يتحوّل لمشفّر أول دخول) */
+async function verifyPin(settings, pin) {
+  if (settings.pinHash && settings.pinSalt) {
+    const { pinHash } = await hashPin(pin, settings.pinSalt);
+    return safeEqual(pinHash, settings.pinHash);
+  }
+  if (settings.adminPin != null) return safeEqual(String(pin), String(settings.adminPin));
+  return false;
+}
+
+/** بيحفظ رمز جديد مشفّر وبيشيل أي نسخة نص عادي */
+async function setPin(settings, pin) {
+  Object.assign(settings, await hashPin(pin));
+  delete settings.adminPin;
+  settings.pinWeak = String(pin) === DEFAULT_PIN; // اللوحة بتنبّه إذا لسا الرمز الافتراضي
+}
+
+/** رمز عشوائي آمن (للمحلات الجديدة) */
+function randomPin(digits = 6) {
+  const n = globalThis.crypto.getRandomValues(new Uint32Array(1))[0] % 10 ** digits;
+  return String(n).padStart(digits, '0');
+}
+
+// الحقول السرية اللي ما لازم تطلع من السيرفر أبداً (لا للزبون ولا للوحة)
+const SECRET_SETTINGS = ['adminPin', 'pinHash', 'pinSalt'];
+const withoutSecrets = (settings) => Object.fromEntries(Object.entries(settings).filter(([k]) => !SECRET_SETTINGS.includes(k)));
+
+Object.assign(__e, { safeEqual, hashPin, verifyPin, setPin, randomPin, SECRET_SETTINGS, withoutSecrets });
+});
+
 __def("server/core.js", function (__e) {
 'use strict';
 // قلب النظام: كل مسارات الـ API كدوال صافية (بدون Express ولا ملفات)
@@ -1988,6 +2084,7 @@ const { currentWeather, geocode } = __req("server/weather.js");
 const { chat } = __req("server/barista/index.js");
 const { aiStatus } = __req("server/barista/ai.js");
 const { menuTemplate } = __req("server/seed.js");
+const { verifyPin, setPin, withoutSecrets } = __req("server/pin.js");
 
 
 
@@ -2135,9 +2232,36 @@ route('POST', '/barista', ({ body }) => chat({
 }));
 
 // الكاشير
-route('POST', '/admin/login', ({ body }) => {
+// محاولات الدخول الغلط: بعد 5 غلطات من نفس الجهاز بيتسكّر الدخول 10 دقايق (ضد تخمين الرمز)
+const loginFails = new Map(); // `${محل}|${عنوان}` → { n, until }
+const LOCK_AFTER = 5;
+const LOCK_MS = 10 * 60_000;
+function loginLocked(key) {
+  const f = loginFails.get(key);
+  if (f?.until && f.until > Date.now()) return Math.ceil((f.until - Date.now()) / 60_000);
+  if (f?.until) loginFails.delete(key);
+  return 0;
+}
+function loginFailed(key) {
+  const f = loginFails.get(key) ?? { n: 0, until: 0 };
+  f.n += 1;
+  if (f.n >= LOCK_AFTER) { f.until = Date.now() + LOCK_MS; f.n = 0; console.warn(`⚠️  ${LOCK_AFTER} محاولات دخول غلط على لوحة الكاشير (${key}) — انسكّر الدخول 10 دقايق`); }
+  loginFails.set(key, f);
+  if (loginFails.size > 5000) for (const [k, v] of loginFails) if (!v.until || v.until < Date.now()) loginFails.delete(k);
+}
+route('POST', '/admin/login', async ({ body, client }) => {
+  const key = `${currentTenant()}|${client ?? 'local'}`;
+  const wait = loginLocked(key);
+  if (wait) throw new HttpError(429, `محاولات غلط كثيرة. جرّب بعد ${wait} دقيقة.`);
   const pin = str(body?.pin, 12);
-  if (!sameText(pin, String(db().settings.adminPin))) throw new HttpError(401, 'الرمز غير صحيح.');
+  const s = db().settings;
+  if (!/^\d{4,8}$/.test(pin) || !(await verifyPin(s, pin))) {
+    loginFailed(key);
+    throw new HttpError(401, 'الرمز غير صحيح.');
+  }
+  loginFails.delete(key);
+  // رمز قديم محفوظ نص عادي: بيتحوّل لمشفّر هلق
+  if (s.adminPin != null || s.pinWeak == null) { await setPin(s, pin); save(); }
   return { token: registerToken(randomToken()) };
 });
 route('POST', '/admin/logout', ({ token }) => { sessions.delete(token); return { ok: true }; }, { admin: true });
@@ -2145,7 +2269,7 @@ route('GET', '/admin/bootstrap', ({ hooks }) => {
   maintain(); // مرة باليوم: أرشفة الشهور اللي خلصت وتنظيف الطلبات القديمة
   const d = db();
   return {
-    settings: d.settings,
+    settings: withoutSecrets(d.settings), // الرمز المشفّر ما بيطلع حتى للوحة
     categories: [...d.categories].sort((a, b) => a.order - b.order),
     items: d.items,
     offers: d.offers,
@@ -2385,7 +2509,7 @@ function cleanLogo(v) {
   if (/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(x) && x.length < 450_000) return x;
   throw new HttpError(400, 'صورة الشعار مش مقبولة (PNG أو JPG أو WEBP، وحجم صغير).');
 }
-route('PUT', '/admin/settings', ({ body: b = {} }) => {
+route('PUT', '/admin/settings', async ({ body: b = {} }) => {
   const s = db().settings;
   if (b.cafeName != null) s.cafeName = str(b.cafeName, 40) || s.cafeName;
   if (b.brandWord != null) s.brandWord = str(b.brandWord, 12) || s.brandWord;
@@ -2406,10 +2530,11 @@ route('PUT', '/admin/settings', ({ body: b = {} }) => {
   if (b.adminPin != null && b.adminPin !== '') {
     const pin = str(b.adminPin, 12);
     if (!/^\d{4,8}$/.test(pin)) throw new HttpError(400, 'الرمز لازم يكون من 4 إلى 8 أرقام.');
-    s.adminPin = pin;
+    if (pin === '1234') throw new HttpError(400, 'اختار رمز غير 1234 (الرمز الافتراضي معروف).');
+    await setPin(s, pin);
   }
   save();
-  return { data: s, events: [toAll('menu:changed')] };
+  return { data: withoutSecrets(s), events: [toAll('menu:changed')] };
 }, { admin: true });
 // القائمة الجاهزة (كافيه أو مطعم): بتبدّل الأقسام والأصناف والعروض، والطلبات والتقارير والطاولات بتضل
 route('POST', '/admin/menu-template', ({ body }) => {
@@ -2448,7 +2573,7 @@ route('POST', '/admin/upload', async ({ body, hooks }) => {
  * ينفّذ طلب API ويرجع { status, data, events }
  * path بدون /api في أوله، وممكن يحتوي query string
  */
-async function handle(method, fullPath, body, { token = null, hooks = {} } = {}) {
+async function handle(method, fullPath, body, { token = null, hooks = {}, client = null } = {}) {
   const [path, query = ''] = String(fullPath).split('?');
   const q = new URLSearchParams(query);
   for (const r of routes) {
@@ -2458,7 +2583,7 @@ async function handle(method, fullPath, body, { token = null, hooks = {} } = {})
     const p = Object.fromEntries(r.keys.map((k, i) => [k, decodeURIComponent(m[i + 1])]));
     try {
       if (r.admin && !validToken(token)) throw new HttpError(401, 'انتهت الجلسة، سجّل الدخول من جديد.');
-      const out = await r.fn({ p, q, body, token, hooks });
+      const out = await r.fn({ p, q, body, token, hooks, client });
       const wrapped = out && typeof out === 'object' && 'data' in out && ('events' in out || 'status' in out);
       return wrapped
         ? { status: out.status ?? 200, data: out.data, events: out.events ?? [] }
@@ -2502,9 +2627,12 @@ function comboValue(offer) {
   return round(offer.itemIds.reduce((s, id) => s + (items.find((i) => i.id === id)?.price ?? 0), 0));
 }
 
+// اللي بيوصل للزبون من إعدادات المحل: قائمة مسموحة بس (أي حقل جديد سري ما بيطلع بالغلط)
+const PUBLIC_SETTINGS = ['cafeName', 'brandWord', 'tagline', 'businessType', 'currency', 'currencyName', 'city', 'lat', 'lon',
+  'baristaName', 'wifi', 'hours', 'cafeNotes', 'theme', 'logoIcon', 'logoName'];
 function publicSettings() {
-  const { adminPin, ...rest } = db().settings;
-  return rest;
+  const s = db().settings;
+  return Object.fromEntries(PUBLIC_SETTINGS.filter((k) => s[k] !== undefined).map((k) => [k, s[k]]));
 }
 
 function zoneOf(tableNumber) {
@@ -4810,6 +4938,12 @@ function revealOnScroll(root = document) {
   els.forEach((e) => io.observe(e));
 }
 
+// صورة صنف ما تحمّلت (بدون نت أو رابط خربان): بنشيلها وبيبان الرسم اللي تحتها
+document.addEventListener('error', (e) => {
+  const img = e.target;
+  if (img instanceof HTMLImageElement && img.parentElement?.classList.contains('art')) img.remove();
+}, true);
+
 Object.assign(__e, { $, $$, esc, reducedMotion, money, moneyText, TENANT, tenantPath, storeKey, frozenNow, api, toast, openSheet, closeSheet, chime, unlockAudio, timeAgo, THEMES, themePref, applyTheme, setTheme, bizWords, applyBusiness, STATUS, SUGAR, revealOnScroll });
 });
 
@@ -5029,12 +5163,12 @@ function itemArt(key) {
 
 /** صورة الصنف: صورة مرفوعة إن وُجدت، وإلا الرسم النحاسي على خلفية بلون الصنف */
 function artTile(item, cls = '') {
-  // الرسم دايماً موجود تحت الصورة: إذا الصورة ما تحمّلت (بدون نت) بتنشال وبيبان الرسم
+  // الرسم دايماً موجود تحت الصورة: إذا الصورة ما تحمّلت (بدون نت) بتنشال وبيبان الرسم (بدون onerror مضمّن عشان سياسة CSP)
   let inner = itemArt(item.art);
   if (item.image) {
     const big = /\bbig\b/.test(cls);
     const src = String(item.image).replace(/([?&]w=)\d+/, `$1${big ? 760 : 360}`).replace(/"/g, '%22');
-    inner += `<img src="${src}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`;
+    inner += `<img src="${src}" alt="" loading="lazy" decoding="async">`; // إذا ما تحمّلت بتنشال (common.js) وبيبان الرسم
   }
   // كل الخلفيات بدرجات البني والبيج (26–40) مع فرق بسيط بين الأصناف، لتضل الهوية متناسقة
   const warm = Math.round(26 + (((Number(item.hue) || 30) % 360) / 360) * 14);
