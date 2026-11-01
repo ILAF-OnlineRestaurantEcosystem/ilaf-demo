@@ -643,7 +643,9 @@ body.pf { background: var(--harbor); min-height: 100dvh; }
 [data-theme="dark"][data-biz="restaurant"] .side { background: linear-gradient(180deg, #2c1b14, #1a100c); }
 [data-theme="dark"][data-biz="restaurant"] .tabbar button[aria-current="page"] { color: #a8482a; }
 [data-biz="restaurant"] [data-cafe-only] { display: none !important; }
-:root:not([data-biz="restaurant"]) [data-rest-only] { display: none !important; }
+/* الكاشير طفى المساعد الذكي أو "ساعدنا نختارك" من الإعدادات: بيختفوا من كل الواجهات */
+[data-no-assistant] [data-open-chat], [data-no-assistant] [data-ask-about], [data-no-assistant] .fab, [data-no-assistant] .chat, [data-no-assistant] .assistant-only { display: none !important; }
+[data-no-helper] [data-go="helper"] { display: none !important; }
 /* بالغامق: العروض والشريط المتحرك أغمق شوي بلون المحل (مش أصفر فاقع) */
 [data-theme="dark"] { --promo-a: color-mix(in srgb, var(--brass) 46%, var(--tide)); --promo-b: color-mix(in srgb, var(--brass) 20%, var(--harbor)); --promo-ink: #fff8ef; }
 
@@ -2233,9 +2235,10 @@ route('POST', '/tables/:n/call', ({ p, body }) => {
   }
   return { status: 201, data: { ok: true }, events: [toAdmin('call:new', call)] };
 });
-route('POST', '/barista', ({ body }) => chat({
-  history: body?.history, table: body?.table, cart: body?.cart, greeting: str(body?.greeting, 400),
-}));
+route('POST', '/barista', ({ body }) => {
+  if (db().settings.assistantOn === false) throw new HttpError(403, 'المساعد الذكي مطفي بهالمحل.');
+  return chat({ history: body?.history, table: body?.table, cart: body?.cart, greeting: str(body?.greeting, 400) });
+});
 
 // الكاشير
 // محاولات الدخول الغلط: بعد 5 غلطات من نفس الجهاز بيتسكّر الدخول 10 دقايق (ضد تخمين الرمز)
@@ -2547,6 +2550,9 @@ route('PUT', '/admin/settings', async ({ body: b = {} }) => {
   if (b.cafeNotes != null) s.cafeNotes = str(b.cafeNotes, 600);
   if (b.businessType != null) s.businessType = b.businessType === 'restaurant' ? 'restaurant' : 'cafe';
   if (b.theme != null) s.theme = cleanTheme(b.theme);
+  // مزايا اختيارية لصفحة الزبون: لما تنطفي بتختفي من كل الواجهات
+  if (b.assistantOn != null) s.assistantOn = b.assistantOn === true;
+  if (b.helperOn != null) s.helperOn = b.helperOn === true;
   if (b.logoIcon != null) s.logoIcon = cleanLogo(b.logoIcon); // بدل الدلّة/القدرة
   if (b.logoName != null) s.logoName = cleanLogo(b.logoName); // صورة بدل كتابة اسم المحل
   if (b.strips != null) { s.strips = cleanStrips(b.strips); delete s.featured; }
@@ -2658,7 +2664,7 @@ function comboValue(offer) {
 
 // اللي بيوصل للزبون من إعدادات المحل: قائمة مسموحة بس (أي حقل جديد سري ما بيطلع بالغلط)
 const PUBLIC_SETTINGS = ['cafeName', 'brandWord', 'tagline', 'businessType', 'currency', 'currencyName', 'city', 'lat', 'lon',
-  'baristaName', 'wifi', 'hours', 'cafeNotes', 'theme', 'logoIcon', 'logoName', 'featured', 'strips'];
+  'baristaName', 'wifi', 'hours', 'cafeNotes', 'theme', 'logoIcon', 'logoName', 'featured', 'strips', 'assistantOn', 'helperOn'];
 function publicSettings() {
   const s = db().settings;
   return Object.fromEntries(PUBLIC_SETTINGS.filter((k) => s[k] !== undefined).map((k) => [k, s[k]]));
@@ -4941,6 +4947,13 @@ function applyBusiness(type) {
   try { localStorage.setItem(storeKey('biz'), biz); } catch { /* */ } // للزيارة الجاية (سكربت الرأس)
 }
 
+/** المزايا الاختيارية من الإعدادات: لما تنطفي بتختفي عناصرها من الصفحة (theme.css) */
+function applyFeatures(settings) {
+  const root = document.documentElement;
+  root.toggleAttribute('data-no-assistant', settings?.assistantOn === false);
+  root.toggleAttribute('data-no-helper', settings?.helperOn === false);
+}
+
 const STATUS = {
   new: { label: 'طلب جديد', short: 'جديد' },
   preparing: { label: 'قيد التحضير', short: 'تحضير' },
@@ -4973,7 +4986,7 @@ document.addEventListener('error', (e) => {
   if (img instanceof HTMLImageElement && img.parentElement?.classList.contains('art')) img.remove();
 }, true);
 
-Object.assign(__e, { $, $$, esc, reducedMotion, money, moneyText, TENANT, tenantPath, storeKey, frozenNow, api, toast, openSheet, closeSheet, chime, unlockAudio, timeAgo, THEMES, themePref, applyTheme, setTheme, bizWords, applyBusiness, STATUS, SUGAR, revealOnScroll });
+Object.assign(__e, { $, $$, esc, reducedMotion, money, moneyText, TENANT, tenantPath, storeKey, frozenNow, api, toast, openSheet, closeSheet, chime, unlockAudio, timeAgo, THEMES, themePref, applyTheme, setTheme, bizWords, applyBusiness, applyFeatures, STATUS, SUGAR, revealOnScroll });
 });
 
 __def("public/js/art.js", function (__e) {
